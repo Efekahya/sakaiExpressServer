@@ -12,16 +12,13 @@ siteLink = "https://online.deu.edu.tr"
 loginurl = siteLink + "/relogin"
 
 with requests.session() as s:
-    
+
     senddata = s.post(loginurl, data=auth)
 
     def getDersID():
-        
 
-        site_url = siteLink + "/portal/favorites/,"
+        site_url = siteLink + "/portal/favorites/get"
         response = s.get(site_url)
-
-        
 
         if response.status_code != 200:
             print("Servere Ulaşılamadı!")
@@ -30,15 +27,13 @@ with requests.session() as s:
             else:
                 print("Daha sonra tekrar deneyin!")
                 exit()
+        else:
+            result = json.loads(response.text)
+            site_ID = result["favoriteSiteIds"]
 
-        
-        source = soup(response.content, "html.parser")
-        result = json.loads(source.text)
-        site_ID = result["favoriteSiteIds"]
-
-        with open("ders_ID.json", "w") as f:
-            f.write(json.dumps(site_ID))
-            f.close()
+            with open("ders_ID.json", "w") as f:
+                f.write(json.dumps(site_ID))
+                f.close()
 
     def convertDersNames():
 
@@ -47,7 +42,6 @@ with requests.session() as s:
 
         ders_Names = []
 
-        
         for i in range(len(ders_ID)):
             site_url = siteLink + "/direct/site/" + ders_ID[i] + ".json"
             response = s.get(site_url)
@@ -61,11 +55,9 @@ with requests.session() as s:
 
     def getAssignment(x):
         with open("ders_Name.json", "r", encoding="utf-8") as f:
-            ders_Name = f.read()
-            ders_Name = json.loads(ders_Name)
+            ders_Name = json.loads(f.read())
         with open("ders_ID.json", "r") as f:
-            ders_ID = f.read()
-            ders_ID = json.loads(ders_ID)
+            ders_ID = json.loads(f.read())
 
         site_URL = "https://online.deu.edu.tr/direct/assignment/site/" + ders_ID[x] + ".json"
         response = s.get(site_URL)
@@ -99,8 +91,7 @@ with requests.session() as s:
         with open("ders_Name.json", "r", encoding="utf-8") as f:
             ders_Name = f.read()
         with open("ders_ID.json", "r") as f:
-            ders_ID = f.read()
-            ders_ID = json.loads(ders_ID)
+            ders_ID = json.loads(f.read())
 
         site_URL = "https://online.deu.edu.tr/direct/announcement/site/" + ders_ID[x] + ".json"
 
@@ -138,8 +129,7 @@ with requests.session() as s:
     def getMeetingId():
 
         with open("ders_ID.json", "r") as f:
-            ders_ID = f.read()
-            ders_ID = json.loads(ders_ID)
+            ders_ID = json.loads(f.read())
         meeting_ID = []
         for i in range(len(ders_ID)):
 
@@ -185,6 +175,9 @@ with requests.session() as s:
             siteID = siteNameResult["siteId"]
             index = ders_ID.index(siteID)
 
+            meetingStartDate = siteNameResult["startDate"] / 1000 + 10800
+            convertToTuple = time.gmtime(meetingStartDate)
+            time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
 
             site_URL = "https://online.deu.edu.tr/direct/bbb-tool/" + meeting_ID[i] + "/joinMeeting"
             response = s.get(site_URL)
@@ -195,9 +188,32 @@ with requests.session() as s:
             elif "notStarted" in source.text:
                 print(ders_Name[index])
                 print("Canlı Ders Daha Başlamadı.")
+                print(time_string)
             else:
                 print(ders_Name[index])
                 print(site_URL)
+
+    def user():
+
+        user_URL = "https://online.deu.edu.tr/direct/user/current.json"
+        responseForUser = s.get(user_URL)
+        userInfo = json.loads(responseForUser.text)
+        userId = userInfo["id"]
+        name = userInfo["displayName"]
+
+        alerts_URL = "https://online.deu.edu.tr/direct/portal/bullhornAlerts.json"
+        responseForAlerts = s.get(alerts_URL)
+        alertInfo = json.loads(responseForAlerts.text)["message"]
+
+        messages_URL = "https://online.deu.edu.tr/direct/profile/" + str(userId) + "/unreadMessagesCount.json"
+        responseForMessages = s.get(messages_URL)
+        messages = str(responseForMessages.text)
+
+        print()
+        print(name)
+        print("Bildirimler :", alertInfo)
+        print("Mesaj Sayısı :", messages)
+        print()
 
 
 if os.path.isfile("ders_ID.json"):
@@ -215,7 +231,7 @@ else:
 
 while True:
     print("********** Sakai The Convenient One v.1.0 *********")
-    secim = int(input("1. Ödevlerim\n2. Duyurular\n3. Toplantılar\n4. Credits\n5. Çıkış\n"))
+    secim = int(input("1. Ödevlerim\n2. Duyurular\n3. Toplantılar\n4. Profilim\n5. Credits\n6. Çıkış\n"))
 
     if secim == 1:
         for i in range(len(ders_ID)):
@@ -227,7 +243,9 @@ while True:
         getMeetingId()
         joinmeeting()
     elif secim == 4:
+        user()
+    elif secim == 5:
         print("Author : Efe Kahyaoğlu")
         print("Contact: efekahya.ek@gmail.com")
-    elif secim == 5:
+    elif secim == 6:
         exit()
