@@ -12,16 +12,13 @@ siteLink = "https://online.deu.edu.tr"
 loginurl = siteLink + "/relogin"
 
 with requests.session() as s:
-    
+
     senddata = s.post(loginurl, data=auth)
 
     def getDersID():
-        
 
         site_url = siteLink + "/portal/favorites/,"
         response = s.get(site_url)
-
-        
 
         if response.status_code != 200:
             print("Servere Ulaşılamadı!")
@@ -31,7 +28,6 @@ with requests.session() as s:
                 print("Daha sonra tekrar deneyin!")
                 exit()
 
-        
         source = soup(response.content, "html.parser")
         result = json.loads(source.text)
         site_ID = result["favoriteSiteIds"]
@@ -47,7 +43,6 @@ with requests.session() as s:
 
         ders_Names = []
 
-        
         for i in range(len(ders_ID)):
             site_url = siteLink + "/direct/site/" + ders_ID[i] + ".json"
             response = s.get(site_url)
@@ -184,7 +179,6 @@ with requests.session() as s:
             siteNameResult = json.loads(siteNameSource.text)
             siteID = siteNameResult["siteId"]
             index = ders_ID.index(siteID)
-
 
             site_URL = "https://online.deu.edu.tr/direct/bbb-tool/" + meeting_ID[i] + "/joinMeeting"
             response = s.get(site_URL)
