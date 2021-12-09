@@ -1,251 +1,190 @@
+from auth import auth
 import requests
 import json
-from bs4 import BeautifulSoup as soup
 import os
 import time
+import threading
+from bs4 import BeautifulSoup as soup
+# Create a file named auth.py and paste this
+# auth = {'eid': 'username', 'pw': 'pass', 'submit': 'Giriş'}
+# And change 'username' and 'pass' with your credentials
 
-start_time = time.time()
 
-auth = {"eid": "username", "pw": "pass", "submit": "Giriş"}
+# Username and password
 
-siteLink = "https://online.deu.edu.tr"
-loginurl = siteLink + "/relogin"
 
+siteLink = 'https://online.deu.edu.tr'
+loginurl = siteLink + '/relogin'
+
+
+# Logged in kalmak için tüm işlemleri session içinde yapıyoruz
 with requests.session() as s:
 
     senddata = s.post(loginurl, data=auth)
 
-    def getDersID():
+    def getDersIDAndNames():
 
-        site_url = siteLink + "/portal/favorites/get"
+        site_url = siteLink + '/portal/favorites/get'
         response = s.get(site_url)
 
-        if response.status_code != 200:
-            print("Servere Ulaşılamadı!")
-            if os.path.isfile("ders_ID.json"):
-                print("Daha önce getirilmiş dersler kullanılıyor")
-            else:
-                print("Daha sonra tekrar deneyin!")
-                exit()
-        else:
-            result = json.loads(response.text)
-            site_ID = result["favoriteSiteIds"]
+        result_json = json.loads(response.text)
+        ders_IDs = result_json['favoriteSiteIds']
 
-            with open("ders_ID.json", "w") as f:
-                f.write(json.dumps(site_ID))
-                f.close()
-
-    def convertDersNames():
-
-        with open("ders_ID.json", "r") as f:
-            ders_ID = json.load(f)
 
         ders_Names = []
+        hoca_Names = []
+        for i in range(len(ders_IDs)):
 
-        for i in range(len(ders_ID)):
-            site_url = siteLink + "/direct/site/" + ders_ID[i] + ".json"
+
+            site_url = siteLink + '/direct/site/' + ders_IDs[i] + '.json'
             response = s.get(site_url)
-            source = soup(response.content, "html.parser")
-            result = json.loads(source.text)
-            names = result["entityTitle"]
-            ders_Names.append(names)
+            result = json.loads(response.text)
 
-        with open("ders_Name.json", "w", encoding="utf-8") as f:
-            f.write(json.dumps(ders_Names))
+            getDersNamesFromJson = result['entityTitle']
+            getHocaNamesFromJson = result["props"]["contact-name"]
+            ders_Names.append(getDersNamesFromJson)
+            hoca_Names.append(getHocaNamesFromJson)
 
-    def getAssignment(x):
-        with open("ders_Name.json", "r", encoding="utf-8") as f:
-            ders_Name = json.loads(f.read())
-        with open("ders_ID.json", "r") as f:
-            ders_ID = json.loads(f.read())
 
-        site_URL = "https://online.deu.edu.tr/direct/assignment/site/" + ders_ID[x] + ".json"
-        response = s.get(site_URL)
-        source = soup(response.content, "html.parser")
+        items = ["dersName", "dersId", "dersHoca"]
 
-        if response.status_code == 404:
-            print("Ders için Ödevler kısmı oluşturulmamış !")
-        else:
-            result = json.loads(source.text)
-            a = result["assignment_collection"]
+        merge = []
+        for i in range(len(ders_IDs)):
+            merge.append([ders_Names[i], ders_IDs[i], hoca_Names[i]])
 
-            print("***********" + ders_Name[x] + "***********")
+        list_json = [dict(zip(items, item)) for item in merge]
 
-            if a == []:
-                print("Daha hiçbir ödev yok!")
-                print()
-            else:
+        with open('dersler.json', 'w') as f:
+          
+            f.write(json.dumps(list_json))
+            f.close()
 
-                for i in range(len(a)):
-                    getDueTime = a[i]["dueTime"]["epochSecond"]
-                    convertToTuple = time.gmtime(getDueTime)
-                    time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
-                    print("Ödev " + str(i + 1))
-                    print()
-                    print(soup(a[i]["instructions"], "html.parser").prettify())
-                    print("Teslim Tarihi : " + time_string)
-                    print()
-                    print()
+    class Ders:
+        def __init__(self, name, id, hoca, odev=["Yok"], duyuru=["Yok"], meeting=[]):
+            self.name = name
+            self.id = id
+            self.hoca = hoca
+            self.odev = odev
+            self.duyuru = duyuru
+            self.meeting = meeting
+        # Duyuruları al ve self.duyuru ya kaydet
 
-    def getAnnouncement(x):
-        with open("ders_Name.json", "r", encoding="utf-8") as f:
-            ders_Name = f.read()
-        with open("ders_ID.json", "r") as f:
-            ders_ID = json.loads(f.read())
+        def getAnnouncement(self):
+            # Dersin json urlsi
+            site_URL = "https://online.deu.edu.tr/direct/announcement/site/" + self.id + ".json"
+            response = s.get(site_URL)
 
-        site_URL = "https://online.deu.edu.tr/direct/announcement/site/" + ders_ID[x] + ".json"
-
-        response = s.get(site_URL)
-        source = soup(response.content, "html.parser")
-        if response.status_code == 404:
-            pass
-            print("Ders için duyurular kısmı oluşturulmamış !")
-            print()
-        else:
+            # Hatalı dosya çıkabiliyor o yüzden try except bloğu kullandım
             try:
-
-                result = json.loads(source.text)
+                result = json.loads(response.content)
+                a = result["announcement_collection"]
             except:
-                print(
-                    "Dosya İşlenemedi! (Bu genelde daha önceden kayıtlı olduğunuz bir dersin silinmesinden kaynaklanır)"
-                )
-                result = json.loads('{"announcement_collection": []}')
-            a = result["announcement_collection"]
-            print("***********" + ders_Name[x] + "***********")
-            if a == []:
-                print("Daha hiçbir duyuru yok!")
-                print()
-            else:
-
-                for i in range(len(a)):
-
-                    print("Duyuru " + str(i + 1))
-                    print()
-                    print(a[i]["createdByDisplayName"])
-                    print(soup(a[i]["body"], "html.parser").prettify())
-                    print()
-                    print()
-
-    def getMeetingId():
-
-        with open("ders_ID.json", "r") as f:
-            ders_ID = json.loads(f.read())
-        meeting_ID = []
-        for i in range(len(ders_ID)):
-
-            site_URL = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + ders_ID[i]
-
-            response = s.get(site_URL)
-
-            if response.status_code != 200:
-                print("Servere Ulaşılamadı!")
-                if os.path.isfile("meeting_ID.json"):
-                    print("Daha önce getirilmiş meeting Id ler kullanılıyor")
-                else:
-                    print("Daha sonra tekrar deneyin!")
-                    exit()
-
-            source = soup(response.content, "html.parser")
-            result = json.loads(source.text)
-            a = result["bbb-tool_collection"]
-
+                a = []
+            # placeholder olarak kullanıyorum "b" değişkenini nedense direk self.duyuru ya appendlediğimde tüm dersler için değiştiriyor.
+            b = []
             for i in range(len(a)):
-                meeting_ID.append(a[i]["id"])
-            with open("meeting_ID.json", "w") as f:
-                f.write(json.dumps(meeting_ID))
-                f.close()
+                b.append(soup(a[i]["body"], "html.parser").text)
+            self.duyuru = b
 
-    def joinmeeting():
+        def getAssignment(self):
 
-        with open("meeting_ID.json", "r") as f:
-            meeting_ID = json.load(f)
-        with open("ders_Name.json", "r", encoding="utf-8") as f:
-            ders_Name = f.read()
-            ders_Name = json.loads(ders_Name)
-        with open("ders_ID.json", "r") as f:
-            ders_ID = f.read()
-            ders_ID = json.loads(ders_ID)
-        for i in range(len(meeting_ID)):
 
-            getSiteNameFromMeeting_URL = "https://online.deu.edu.tr/direct/bbb-tool/" + meeting_ID[i] + ".json"
+            site_URL = "https://online.deu.edu.tr/direct/assignment/site/" + self.id + ".json"
 
-            siteNameFromMeeting = s.get(getSiteNameFromMeeting_URL)
-            siteNameSource = soup(siteNameFromMeeting.content, "html.parser")
-            siteNameResult = json.loads(siteNameSource.text)
-            siteID = siteNameResult["siteId"]
-            index = ders_ID.index(siteID)
-
-            meetingStartDate = siteNameResult["startDate"] / 1000 + 10800
-            convertToTuple = time.gmtime(meetingStartDate)
-            time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
-
-            site_URL = "https://online.deu.edu.tr/direct/bbb-tool/" + meeting_ID[i] + "/joinMeeting"
             response = s.get(site_URL)
 
-            source = soup(response.content, "html.parser")
-            if "alreadyEnded" in source.text:
+            if response.status_code == 404:
                 pass
-            elif "notStarted" in source.text:
-                print(ders_Name[index])
-                print("Canlı Ders Daha Başlamadı.")
-                print(time_string)
+
             else:
-                print(ders_Name[index])
-                print(site_URL)
+                result = json.loads(response.text)
+                a = result["assignment_collection"]
+                if a == []:
+                    pass
+                else:
+                    ödevlist = []
+                    for i in range(len(a)):
+                        # Ödev in saatini epoch cinsinden alıp prettify ediyorum.
+                        if a[i]["dueTime"]["epochSecond"] + 9000 - time.time() > 0:
+                            getDueTime = a[i]["dueTime"]["epochSecond"] + 9000
+                            convertToTuple = time.gmtime(getDueTime)
+                            time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
+                            # Ödevin body kısmı
+                            odevContent = soup(a[i]["instructions"], "html.parser").text
+                            ödevlist.append({"dueTime": time_string, "content": odevContent})
+                    self.odev = ödevlist
 
-    def user():
+        def getMeetingIdAndJoin(self):
 
-        user_URL = "https://online.deu.edu.tr/direct/user/current.json"
-        responseForUser = s.get(user_URL)
-        userInfo = json.loads(responseForUser.text)
-        userId = userInfo["id"]
-        name = userInfo["displayName"]
+            site_URL = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + self.id
+            response = s.get(site_URL)
+            result = json.loads(response.text)
+            a = result["bbb-tool_collection"]
+            meetings = []
+            for i in range(len(a)):
+                # Eğer toplantının başlama saati 2+ saati geçmişse id sini alma
+                if (int(time.time()) - int(str(a[i]["startDate"])[:-3])) < 100000:
+                    meetingStartDate = a[i]["startDate"] / 1000 + 9000+1800
+                    convertToTuple = time.gmtime(meetingStartDate)
+                    time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
+                    # Aldığın id ler valid mi ?
+                    site_URL = "https://online.deu.edu.tr/direct/bbb-tool/" + a[i]["id"] + "/joinMeeting"
+                    response = s.get(site_URL)
 
-        alerts_URL = "https://online.deu.edu.tr/direct/portal/bullhornAlerts.json"
-        responseForAlerts = s.get(alerts_URL)
-        alertInfo = json.loads(responseForAlerts.text)["message"]
+                    if "alreadyEnded" in response.text:
+                        isMeetingStarted = "Ended"
+                    elif "notStarted" in response.text:
+                        isMeetingStarted = "Scheculed"
+                    else:
+                        isMeetingStarted = True
+                    meetings.append({"meetingId": a[i]["id"], "meetingStartDate": time_string,
+                                    "siteName": self.name, "available": isMeetingStarted, "meetingUrl": site_URL})
+                self.meeting = meetings
 
-        messages_URL = "https://online.deu.edu.tr/direct/profile/" + str(userId) + "/unreadMessagesCount.json"
-        responseForMessages = s.get(messages_URL)
-        messages = str(responseForMessages.text)
-
-        print()
-        print(name)
-        print("Bildirimler :", alertInfo)
-        print("Mesaj Sayısı :", messages)
-        print()
-
-
-if os.path.isfile("ders_ID.json"):
-
-    with open("ders_ID.json", "r") as f:
-        ders_ID = f.read()
-        ders_ID = json.loads(ders_ID)
-
+# İlk kez çalıştırılıyorsa
+if os.path.isfile("dersler.json"):
+    # Ders bilgisini dosyadan al
+    with open("dersler.json", "r") as f:
+        dersInfo = json.loads(f.read())
 else:
-    getDersID()
-    convertDersNames()
-    with open("ders_ID.json", "r") as f:
-        ders_ID = f.read()
-        ders_ID = json.loads(ders_ID)
 
-while True:
-    print("********** Sakai The Convenient One v.1.0 *********")
-    secim = int(input("1. Ödevlerim\n2. Duyurular\n3. Toplantılar\n4. Profilim\n5. Credits\n6. Çıkış\n"))
+    getDersIDAndNames()
+    with open("dersler.json", "r") as f:
+        dersInfo = json.loads(f.read())
 
-    if secim == 1:
-        for i in range(len(ders_ID)):
-            getAssignment(i)
-    elif secim == 2:
-        for i in range(len(ders_ID)):
-            getAnnouncement(i)
-    elif secim == 3:
-        getMeetingId()
-        joinmeeting()
-    elif secim == 4:
-        user()
-    elif secim == 5:
-        print("Author : Efe Kahyaoğlu")
-        print("Contact: efekahya.ek@gmail.com")
-    elif secim == 6:
-        exit()
+# Ders objelerini oluştur.
+dersler = []
+for i in range(len(dersInfo)):
+    dersler.append(Ders(dersInfo[i]["dersName"], dersInfo[i]["dersId"], dersInfo[i]["dersHoca"]))
+
+# Threading
+
+duyurular = [threading.Thread(target=dersler[i].getAnnouncement, args=()) for i in range(len(dersler))]
+ödevler = [threading.Thread(target=dersler[i].getAssignment, args=()) for i in range(len(dersler))]
+meetingler = [threading.Thread(target=dersler[i].getMeetingIdAndJoin, args=()) for i in range(len(dersler))]
+
+for i in range(len(dersler)):
+    duyurular[i].start()
+    ödevler[i].start()
+    meetingler[i].start()
+for i in range(len(dersler)):
+    # Threadi bitir
+    duyurular[i].join()
+    ödevler[i].join()
+    meetingler[i].join()
+# dersler[5].getAnnouncement()
+# dersler[5].getAssignment()
+# dersler[5].getMeetingIdAndJoin()
+
+# for i in range(len(dersler)):
+#     print(dersler[i].name)
+#     print("MEETING :", dersler[i].meeting)
+    # print("DUYURU :", dersler[i].duyuru)
+    # print("ODEV :", dersler[i].odev)
+# print(dersler[5].odev)
+
+# for i in range(len(dersler)):
+#     for j in range(len(dersler[i].odev)):
+#         h = dersler[i].odev[j]
+#         if h != "Yok":
+#             print(h["content"])
