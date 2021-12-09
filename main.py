@@ -19,6 +19,7 @@ loginurl = siteLink + '/relogin'
 
 # Logged in kalmak için tüm işlemleri session içinde yapıyoruz
 with requests.session() as s:
+
     senddata = s.post(loginurl, data=auth)
 
     def getDersIDAndNames():
@@ -29,9 +30,11 @@ with requests.session() as s:
         result_json = json.loads(response.text)
         ders_IDs = result_json['favoriteSiteIds']
 
+
         ders_Names = []
         hoca_Names = []
         for i in range(len(ders_IDs)):
+
 
             site_url = siteLink + '/direct/site/' + ders_IDs[i] + '.json'
             response = s.get(site_url)
@@ -42,6 +45,7 @@ with requests.session() as s:
             ders_Names.append(getDersNamesFromJson)
             hoca_Names.append(getHocaNamesFromJson)
 
+
         items = ["dersName", "dersId", "dersHoca"]
 
         merge = []
@@ -51,7 +55,7 @@ with requests.session() as s:
         list_json = [dict(zip(items, item)) for item in merge]
 
         with open('dersler.json', 'w') as f:
-
+          
             f.write(json.dumps(list_json))
             f.close()
 
@@ -84,13 +88,15 @@ with requests.session() as s:
 
         def getAssignment(self):
 
+
             site_URL = "https://online.deu.edu.tr/direct/assignment/site/" + self.id + ".json"
+
             response = s.get(site_URL)
 
             if response.status_code == 404:
                 pass
-            else:
 
+            else:
                 result = json.loads(response.text)
                 a = result["assignment_collection"]
                 if a == []:
@@ -141,6 +147,7 @@ if os.path.isfile("dersler.json"):
     with open("dersler.json", "r") as f:
         dersInfo = json.loads(f.read())
 else:
+
     getDersIDAndNames()
     with open("dersler.json", "r") as f:
         dersInfo = json.loads(f.read())
