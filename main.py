@@ -1,12 +1,20 @@
+from auth import auth
 import requests
 import json
 from bs4 import BeautifulSoup as soup
 import os
 import time
 import threading
-from tkinter import *
+
+# Create a file named auth.py and paste this
+# auth = {'eid': 'username', 'pw': 'pass', 'submit': 'Giriş'}
+# And change 'username' and 'pass' with your credentials
+
+
+
 # Username and password
-auth = {'eid': 'username', 'pw': 'pass', 'submit': 'Giriş'}
+
+
 siteLink = 'https://online.deu.edu.tr'
 loginurl = siteLink + '/relogin'
 
@@ -95,12 +103,13 @@ with requests.session() as s:
                     ödevlist = []
                     for i in range(len(a)):
                         # Ödev in saatini epoch cinsinden alıp prettify ediyorum.
-                        getDueTime = a[i]["dueTime"]["epochSecond"]
-                        convertToTuple = time.gmtime(getDueTime)
-                        time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
-                        # Ödevin body kısmı
-                        odevContent = soup(a[i]["instructions"], "html.parser").prettify()
-                        ödevlist.append({"dueTime": time_string, "content": odevContent})
+                        if a[i]["dueTime"]["epochSecond"] + 9000 - time.time() > 0:
+                            getDueTime = a[i]["dueTime"]["epochSecond"] + 9000
+                            convertToTuple = time.gmtime(getDueTime)
+                            time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
+                            # Ödevin body kısmı
+                            odevContent = soup(a[i]["instructions"], "html.parser").prettify()
+                            ödevlist.append({"dueTime": time_string, "content": odevContent})
                     self.odev = ödevlist
 
         def getMeetingIdAndJoin(self):
@@ -111,8 +120,8 @@ with requests.session() as s:
             a = result["bbb-tool_collection"]
             meetings = []
             for i in range(len(a)):
-                # Eğer toplantının başlama saati 1 saati geçmişse id sini alma
-                if (int(time.time()) - int(str(a[i]["startDate"])[:-3])) < 3600:
+                # Eğer toplantının başlama saati 2+ saati geçmişse id sini alma
+                if (int(time.time()) - int(str(a[i]["startDate"])[:-3])) < 100000:
                     meetingStartDate = a[i]["startDate"] / 1000 + 9000
                     convertToTuple = time.gmtime(meetingStartDate)
                     time_string = time.strftime("%d/%m/%Y, %H:%M:%S", convertToTuple)
@@ -121,9 +130,11 @@ with requests.session() as s:
                     response = s.get(site_URL)
 
                     if "alreadyEnded" in response.text:
-                        pass
+                        isMeetingStarted = "Ended"
                     elif "notStarted" in response.text:
-                        isMeetingStarted = False
+                        isMeetingStarted = "Scheculed"
+                    else:
+                        isMeetingStarted = True
                     meetings.append({"meetingId": a[i]["id"], "meetingStartDate": time_string,
                                      "siteName": self.name, "available": isMeetingStarted, "meetingUrl": site_URL})
                 self.meeting = meetings
@@ -144,68 +155,26 @@ for i in range(len(dersInfo)):
     dersler.append(Ders(dersInfo[i]["dersName"], dersInfo[i]["dersId"], dersInfo[i]["dersHoca"]))
 
 # Threading
+
+
+
 duyurular = [threading.Thread(target=dersler[i].getAnnouncement, args=()) for i in range(len(dersler))]
 ödevler = [threading.Thread(target=dersler[i].getAssignment, args=()) for i in range(len(dersler))]
-meetingler = [threading.Thread(target=dersler[i].getMeetingIdAndJoin(), args=()) for i in range(len(dersler))]
+meetingler = [threading.Thread(target=dersler[i].getMeetingIdAndJoin, args=()) for i in range(len(dersler))]
 
 for i in range(len(dersler)):
     duyurular[i].start()
     ödevler[i].start()
     meetingler[i].start()
+for i in range(len(dersler)):
     # Threadi bitir
     duyurular[i].join()
     ödevler[i].join()
     meetingler[i].join()
 
-# ------------ Tkinter-----------
-window = Tk()
-window.title("Convenient Sakai v1.1")
-window.geometry("800x400")
 
-listbox = Listbox(window, height=20, width=80)
-
-
-def showDersler():
-    listbox.delete("0", "end")
-    for i in range(len(dersler)):
-        listbox.insert(i, dersler[i].name)
-    listbox.pack()
-
-
-def showDuyurular():
-    listbox.delete("0", "end")
-    for i in range(len(dersler)):
-        for j in range(len(dersler[i].duyuru)):
-            listbox.insert(i, dersler[i].duyuru[j])
-    listbox.pack()
-
-
-def showOdevler():
-    listbox.delete("0", "end")
-    for i in range(len(dersler)):
-        for j in range(len(dersler[i].odev)):
-            listbox.insert(i, dersler[i].odev[j])
-    listbox.pack()
-
-
-def showCanlıDersler():
-    listbox.delete("0", "end")
-    for i in range(len(dersler)):
-        for j in range(len(dersler[i].meeting)):
-            listbox.insert(i, dersler[i].meeting[j])
-    listbox.pack()
-
-
-b1 = Button(window, text="Derslerim", command=showDersler)
-b1.pack()
-
-b2 = Button(window, text="Duyurularım", command=showDuyurular)
-b2.pack()
-
-b3 = Button(window, text="Ödevlerim", command=showOdevler)
-b3.pack()
-
-b4 = Button(window, text="Canlı Dersler", command=showCanlıDersler)
-b4.pack()
-
-window.mainloop()
+for i in range(len(dersler)):
+    print(dersler[i].meeting)
+    print(dersler[i].name)
+    print(dersler[i].duyuru)
+print()
