@@ -1,4 +1,4 @@
-from auth import auth
+# from auth import auth
 import requests
 import json
 import os
@@ -16,48 +16,55 @@ from bs4 import BeautifulSoup as soup
 siteLink = 'https://online.deu.edu.tr'
 loginurl = siteLink + '/relogin'
 
-
 # Logged in kalmak için tüm işlemleri session içinde yapıyoruz
 with requests.session() as s:
 
     senddata = s.post(loginurl, data=auth)
 
+    def verifyUser():
+        if "şifreniz hatalı" in senddata.text:
+            print("Hatalı kullanıcı adı veya şifre")
+            return False
+        else:
+            return True
+
     def getDersIDAndNames():
+        isUser = verifyUser()
+        if isUser:
 
-        site_url = siteLink + '/portal/favorites/get'
-        response = s.get(site_url)
-
-        result_json = json.loads(response.text)
-        ders_IDs = result_json['favoriteSiteIds']
-
-
-        ders_Names = []
-        hoca_Names = []
-        for i in range(len(ders_IDs)):
-
-
-            site_url = siteLink + '/direct/site/' + ders_IDs[i] + '.json'
+            site_url = siteLink + '/portal/favorites/get'
             response = s.get(site_url)
-            result = json.loads(response.text)
 
-            getDersNamesFromJson = result['entityTitle']
-            getHocaNamesFromJson = result["props"]["contact-name"]
-            ders_Names.append(getDersNamesFromJson)
-            hoca_Names.append(getHocaNamesFromJson)
+            result_json = json.loads(response.text)
+            ders_IDs = result_json['favoriteSiteIds']
 
+            ders_Names = []
+            hoca_Names = []
+            for i in range(len(ders_IDs)):
 
-        items = ["dersName", "dersId", "dersHoca"]
+                site_url = siteLink + '/direct/site/' + ders_IDs[i] + '.json'
+                response = s.get(site_url)
+                result = json.loads(response.text)
 
-        merge = []
-        for i in range(len(ders_IDs)):
-            merge.append([ders_Names[i], ders_IDs[i], hoca_Names[i]])
+                getDersNamesFromJson = result['entityTitle']
+                getHocaNamesFromJson = result["props"]["contact-name"]
+                ders_Names.append(getDersNamesFromJson)
+                hoca_Names.append(getHocaNamesFromJson)
 
-        list_json = [dict(zip(items, item)) for item in merge]
+            items = ["dersName", "dersId", "dersHoca"]
 
-        with open('dersler.json', 'w') as f:
-          
-            f.write(json.dumps(list_json))
-            f.close()
+            merge = []
+            for i in range(len(ders_IDs)):
+                merge.append([ders_Names[i], ders_IDs[i], hoca_Names[i]])
+
+            list_json = [dict(zip(items, item)) for item in merge]
+
+            with open('dersler.json', 'w') as f:
+
+                f.write(json.dumps(list_json))
+                f.close()
+        else:
+            return False
 
     class Ders:
         def __init__(self, name, id, hoca, odev=["Yok"], duyuru=["Yok"], meeting=[]):
@@ -87,7 +94,6 @@ with requests.session() as s:
             self.duyuru = b
 
         def getAssignment(self):
-
 
             site_URL = "https://online.deu.edu.tr/direct/assignment/site/" + self.id + ".json"
 
@@ -147,10 +153,13 @@ if os.path.isfile("dersler.json"):
     with open("dersler.json", "r") as f:
         dersInfo = json.loads(f.read())
 else:
-
-    getDersIDAndNames()
-    with open("dersler.json", "r") as f:
-        dersInfo = json.loads(f.read())
+    a = getDersIDAndNames()
+    if a:
+        with open("dersler.json", "r") as f:
+            dersInfo = json.loads(f.read())
+    else:
+        print("Dersler alınamadı")
+        exit()
 
 # Ders objelerini oluştur.
 dersler = []
