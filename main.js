@@ -48,6 +48,7 @@ app.use(
 );
 //?______________________________________________________________________________________________________
 app.use("/user", require("./routes/userRoute"));
+app.use("/utils", require("./routes/utilsRoute"));
 
 app.use(notFound);
 app.use(errorHandler);

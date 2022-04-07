@@ -39,7 +39,6 @@ exports.logout = (req, res) => {
 };
 
 exports.addSakai = async (req, res) => {
-	console.log(req.session.user);
 	const user = await User.findById(req.session.user._id);
 	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
 	user.sakaiEmail = req.body.sakaiEmail;
