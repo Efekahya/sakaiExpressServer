@@ -76,6 +76,7 @@ exports.getSessionToken = async (req, res) => {
 };
 
 exports.getAnnouncements = async (req, res) => {
+	console.log("first");
 	const user = await User.findById(req.session.user._id);
 	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
 	const url = "https://online.deu.edu.tr/direct/announcement/user.json";

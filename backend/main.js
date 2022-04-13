@@ -6,8 +6,9 @@ const errorHandler = require("./middlewares/errorHandler");
 const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
 require("dotenv").config();
-
+const cors = require("cors");
 //!                                             DB CONNECTION
+
 //!_____________________________________________________________________________________________________
 mongoose.connect(process.env.MONGO_URI, {
 	useNewUrlParser: true,
@@ -25,7 +26,14 @@ db.once("open", () => {
 //?                                                 CONFIG
 //?______________________________________________________________________________________________________
 
+app.use(
+	cors({
+		origin: "*",
+	})
+);
+
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(
 	session({
 		secret: "secret", //? uuid kullanınca çalışmıyor
