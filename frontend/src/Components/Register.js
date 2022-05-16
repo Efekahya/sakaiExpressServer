@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const handleRegister = (e) => {
   e.preventDefault();
