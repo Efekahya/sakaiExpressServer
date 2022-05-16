@@ -1,37 +1,61 @@
-import { React, useState } from "react";
+import { React, useState, useContext } from "react";
 import Register from "./Register";
 import axios from "axios";
-const handleRegister = (e) => {
-  e.preventDefault();
-  const form = e.target.form;
-  console.log(form);
-  const data = {
-    email: form.email.value,
-    password: form.password.value,
-  };
-  axios
-    .post("http://localhost:3000/user/login", data, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then((response) => {
-      if (response.data.status == "Success") {
-        localStorage.setItem("token", response.data.token);
-        window.location.href = "/";
-      }
-    });
-};
-
+import { NavLink, Link, Navigate, useNavigate } from "react-router-dom";
+import LoginContext from "../Context/Login";
 export default function Login() {
-  let [user, setUser] = useState({ status: "logged" });
+  const { setLoggedIn } = useContext(LoginContext);
+  const navigate = useNavigate();
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const form = e.target.form;
+    const data = {
+      email: form.email.value,
+      password: form.password.value,
+    };
+    axios
+      .post("http://localhost:3000/user/login", data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        if (response.data.status === "Success") {
+          localStorage.setItem("login", "true");
+          localStorage.setItem("email", response.data.message.email);
+          setLoggedIn({
+            login: "true",
+            email: response.data.message.email,
+          });
+
+          // redirect to home page
+          if (window.location.pathname === "/login") {
+            window.location.replace("/");
+          } else {
+            window.location.reload();
+          }
+        }
+      });
+  };
   return (
     <>
       <div className="container">
         <div className="row">
           <div className="col-md-6 mx-auto">
             <div className="card card-body mt-5">
-              <h2>Login</h2>
+              <div className="d-flex justify-content-md-around">
+                <b>
+                  <NavLink to="/login" className="btn btn-primary">
+                    {" "}
+                    Login{" "}
+                  </NavLink>
+                </b>{" "}
+                <NavLink to="/register" className="btn btn-secondary">
+                  {" "}
+                  Register{" "}
+                </NavLink>
+              </div>
               <form action="" method="POST">
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
@@ -56,10 +80,11 @@ export default function Login() {
                   />
                 </div>
                 <br />
+
                 <button
                   type="button"
                   className="btn btn-primary"
-                  onClick={handleRegister}
+                  onClick={handleLogin}
                 >
                   Login
                 </button>

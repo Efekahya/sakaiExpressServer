@@ -1,24 +1,34 @@
-import React from "react";
-import Navbar from "./Navbar";
+import { React, useContext } from "react";
 import Feed from "./Feed";
 import Login from "./Login";
-import { Link } from "react-router-dom";
+import LoginContext from "../Context/Login";
+
 export default function Home() {
-  if (!localStorage.getItem("token")) {
+  const { loggedIn } = useContext(LoginContext);
+  console.log(loggedIn);
+  if (loggedIn.login === "false") {
     return (
       <>
-        <Navbar />
-        <h1>Please Login</h1>
-        <Link to="/login">Login</Link>;
+        <div className="container">
+          <br />
+          <br />
+          <div className="d-flex justify-content-center">
+            <h5>You have to login before using the system</h5>
+          </div>
+        </div>
+        <Login />
       </>
     );
   }
-  return (
-    <>
-      <div>
-        <Navbar />
-        <Feed />
-      </div>
-    </>
-  );
+  if (loggedIn.login === "true") {
+    if (loggedIn.sakai === "" || loggedIn.sakai === undefined) {
+      
+    return (
+      <>
+        <div>
+          <Feed />
+        </div>
+      </>
+    );
+  }
 }

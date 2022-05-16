@@ -17,62 +17,72 @@ exports.register = (req, res) => {
 };
 
 exports.login = async (req, res) => {
-	const user = await User.findOne({ email: req.body.email.toLowerCase() });
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	bcrypt.compare(req.body.password, user.password, (err, result) => {
-		if (err) return res.status(500).json({ status: "Error", message: err });
-		if (!result) return res.status(404).json({ status: "Error", message: "Password is incorrect" });
-		req.session.user = {
-			_id: user._id,
-			name: user.name,
-			email: user.email,
-		};
-		res.status(200).json({ status: "Success", message: user });
-	});
+  const user = await User.findOne({ email: req.body.email.toLowerCase() });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  bcrypt.compare(req.body.password, user.password, (err, result) => {
+    if (err) return res.status(500).json({ status: "Error", message: err });
+    if (!result)
+      return res
+        .status(404)
+        .json({ status: "Error", message: "Password is incorrect" });
+    req.session.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    };
+    res.status(200).json({ status: "Success", message: user });
+  });
 };
 
 exports.logout = (req, res) => {
-	req.session.destroy((err) => {
-		if (err) return res.status(500).json({ status: "Error", message: err });
-		res.status(200).json({ status: "Success", message: "Logged out" });
-	});
+  req.session.destroy((err) => {
+    if (err) return res.status(500).json({ status: "Error", message: err });
+    res.status(200).json({ status: "Success", message: "Logged out" });
+  });
 };
 
 exports.addSakai = async (req, res) => {
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	user.sakaiEmail = req.body.sakaiEmail;
-	user.sakaiPassword = req.body.sakaiPassword;
-	user.save((err, user) => {
-		if (err) return res.status(500).json({ status: "Error", message: err });
-		res.status(200).json({ status: "Success", message: user });
-	});
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  user.sakaiEmail = req.body.sakaiEmail;
+  user.sakaiPassword = req.body.sakaiPassword;
+  user.save((err, user) => {
+    if (err) return res.status(500).json({ status: "Error", message: err });
+    res.status(200).json({ status: "Success", message: user });
+  });
 };
 
 exports.getSessionToken = async (req, res) => {
-	const url = "https://online.deu.edu.tr/relogin";
-	const user = await User.findById(req.session.user._id);
-	const options = {
-		method: "POST",
-		url: url,
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded",
-		},
-		form: {
-			eid: user.sakaiEmail,
-			pw: user.sakaiPassword,
-			submit: "Giriş",
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
+  const url = "https://online.deu.edu.tr/relogin";
+  if (!req.session.user) {
+    return res
+      .status(404)
+      .json({ status: "Error", message: "User has not added sakai info" });
+  }
+  const user = await User.findById(req.session.user._id);
+  const options = {
+    method: "POST",
+    url: url,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    form: {
+      eid: user.sakaiEmail,
+      pw: user.sakaiPassword,
+      submit: "Giriş",
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
 
-		const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
-		req.session.sakai = {
-			token: token,
-		};
-		res.status(200).json({ status: "Success", message: token });
-	});
+    const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
+    req.session.sakai = {
+      token: token,
+    };
+    res.status(200).json({ status: "Success", message: token });
+  });
 };
 
 exports.getAnnouncements = async (req, res) => {

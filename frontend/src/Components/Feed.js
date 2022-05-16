@@ -1,6 +1,22 @@
-import React from "react";
+import { React, useContext } from "react";
+import LoginContext from "../Context/Login";
+import axios from "axios";
 const items = [1, 2, 3, 4, 5];
 export default function Feed() {
+  const { loggedIn } = useContext(LoginContext);
+  console.log(loggedIn.email);
+  axios
+    .post("http://localhost:3000/user/announcement", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((response) => {
+      if (response.data.status === "Success") {
+        console.log(response.data.message);
+      }
+    });
+
   return (
     <div className="container ma-auto w-100 p-0">
       <div className="row ">

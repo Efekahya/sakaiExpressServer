@@ -1,34 +1,41 @@
-import React from "react";
+import { React, useState } from "react";
 import Home from "./Components/Home";
 import Login from "./Components/Login";
-import { Router, Link, Routes, Route, BrowserRouter } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Navbar from "./Components/Navbar";
-
+import LoginContext from "./Context/Login";
+import Register from "./Components/Register";
 function App() {
+  let loginValue = localStorage.getItem("login");
+  let emailValue = localStorage.getItem("email");
+  if (loginValue === null || loginValue === undefined) {
+    loginValue = "false";
+  }
+
+  const [loggedIn, setLoggedIn] = useState({
+    login: loginValue,
+    email: emailValue,
+  });
   return (
     <>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
-          integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4"
-          crossorigin="anonymous"
-        ></link>
-      </head>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <>
-                <Navbar />
-                <Login />
-              </>
-            }
-          />
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </BrowserRouter>
+      <LoginContext.Provider value={{ loggedIn, setLoggedIn }}>
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <>
+                  <Login />
+                </>
+              }
+            />
+            <Route path="/" exact element={<Home />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<div>404</div>} />
+          </Routes>
+        </BrowserRouter>
+      </LoginContext.Provider>
     </>
   );
 }
