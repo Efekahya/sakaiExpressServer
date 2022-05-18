@@ -1,27 +1,27 @@
-import { React, useState, useContext } from "react";
-import Register from "./Register";
+import { React, useContext } from "react";
 import axios from "axios";
-import { NavLink, Link, Navigate, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import LoginContext from "../Context/Login";
 export default function Login() {
   const { setLoggedIn } = useContext(LoginContext);
-  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const form = e.target.form;
     const data = {
       email: form.email.value,
       password: form.password.value,
     };
-    axios
+    await axios
       .post("http://localhost:3000/user/login", data, {
         headers: {
           "Content-Type": "application/json",
         },
+        withCredentials: true,
       })
       .then((response) => {
         if (response.data.status === "Success") {
+          console.log("Succes login");
           localStorage.setItem("login", "true");
           localStorage.setItem("email", response.data.message.email);
           setLoggedIn({
@@ -36,6 +36,24 @@ export default function Login() {
             window.location.reload();
           }
         }
+      })
+      .catch((error) => {
+        console.log(error.response.data);
+      });
+    await axios
+      .get("http://localhost:3000/user/getSakai", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.data.status === "Success") {
+          console.log(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.log(error.response.data);
       });
   };
   return (

@@ -4,34 +4,43 @@ const bcrypt = require("bcrypt");
 const request = require("request");
 
 exports.register = (req, res) => {
-	userPassword = bcrypt.hashSync(req.body.password, 10);
-	let user = new User({
-		name: req.body.name.toLowerCase(),
-		email: req.body.email,
-		password: userPassword,
-	});
-	user.save((err, user) => {
-		if (err) return res.status(500).json({ status: "Error", message: err });
-		res.status(200).json({ status: "Success", message: user });
-	});
+  userPassword = bcrypt.hashSync(req.body.password, 10);
+  let user = new User({
+    name: req.body.name.toLowerCase(),
+    email: req.body.email,
+    password: userPassword,
+  });
+  user.save((err, user) => {
+    if (err) return res.status(500).json({ status: "Error", message: err });
+    res.status(200).json({ status: "Success", message: user });
+  });
 };
 
 exports.login = async (req, res) => {
   const user = await User.findOne({ email: req.body.email.toLowerCase() });
-  if (!user)
+  if (!user) {
     return res.status(404).json({ status: "Error", message: "User not found" });
+  }
   bcrypt.compare(req.body.password, user.password, (err, result) => {
-    if (err) return res.status(500).json({ status: "Error", message: err });
-    if (!result)
+    if (err) {
+      return res.status(500).json({ status: "Error", message: err });
+    }
+    if (!result) {
       return res
         .status(404)
         .json({ status: "Error", message: "Password is incorrect" });
+    }
     req.session.user = {
       _id: user._id,
       name: user.name,
       email: user.email,
     };
-    res.status(200).json({ status: "Success", message: user });
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({ status: "Error", message: err });
+      }
+    });
+    return res.status(200).json({ status: "Success", message: user });
   });
 };
 
@@ -56,6 +65,7 @@ exports.addSakai = async (req, res) => {
 
 exports.getSessionToken = async (req, res) => {
   const url = "https://online.deu.edu.tr/relogin";
+
   if (!req.session.user) {
     return res
       .status(404)
@@ -81,169 +91,198 @@ exports.getSessionToken = async (req, res) => {
     req.session.sakai = {
       token: token,
     };
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ status: "Error", message: err });
+    });
     res.status(200).json({ status: "Success", message: token });
   });
 };
 
 exports.getAnnouncements = async (req, res) => {
-	console.log("first");
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	const url = "https://online.deu.edu.tr/direct/announcement/user.json";
-	const options = {
-		method: "GET",
-		url: url,
-		headers: {
-			"Content-Type": "application/json",
-			Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
-		json = JSON.parse(body);
-		json = json.announcement_collection;
-		let announcement = [];
-		for (let i = 0; i < json.length; i++) {
-			const element = json[i];
-			if (element.createdOn + 9000 - Date.now() > 0) {
-				announcement.push({
-					title: element.title,
-					id: element.id,
-					createdOn: element.createdOn,
-					body: element.body,
-				});
-			}
-		}
-		res.status(200).json({ status: "Success", message: announcement });
-	});
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  const url = "https://online.deu.edu.tr/direct/announcement/user.json";
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.announcement_collection;
+    let announcement = [];
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      announcement.push({
+        title: element.title,
+        id: element.id,
+        createdOn: element.createdOn,
+        body: element.body,
+      });
+    }
+    res.status(200).json({ status: "Success", message: announcement });
+  });
 };
 exports.announcementDetails = async (req, res) => {
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	const url = "https://online.deu.edu.tr/direct/announcement/user.json";
-	const options = {
-		method: "GET",
-		url: url,
-		headers: {
-			"Content-Type": "application/json",
-			Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
-		json = JSON.parse(body);
-		json = json.announcement_collection;
-		let announcement = [];
-		for (let i = 0; i < json.length; i++) {
-			const element = json[i];
-			if (element.id.split(":")[0] == req.params.id) {
-				announcement.push({
-					title: element.title,
-					id: element.id,
-					createdOn: element.createdOn,
-					body: element.body,
-				});
-			}
-		}
-		res.status(200).json({ status: "Success", message: announcement });
-	});
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  const url = "https://online.deu.edu.tr/direct/announcement/user.json";
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.announcement_collection;
+    let announcement = [];
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      if (element.id.split(":")[0] == req.params.id) {
+        announcement.push({
+          title: element.title,
+          id: element.id,
+          createdOn: element.createdOn,
+          body: element.body,
+        });
+      }
+    }
+    res.status(200).json({ status: "Success", message: announcement });
+  });
 };
 
 exports.getAssignments = async (req, res) => {
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	const url = "https://online.deu.edu.tr/direct/assignment/my.json";
-	const options = {
-		method: "GET",
-		url: url,
-		headers: {
-			"Content-Type": "application/json",
-			Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
-		json = JSON.parse(body);
-		json = json.assignment_collection;
-		let assignment = [];
-		for (let i = 0; i < json.length; i++) {
-			const element = json[i];
-			if (element.dueTime.epochSecond + 9000 - Date.now() > 0) {
-				assignment.push({
-					title: element.title,
-					id: element.id,
-					dueDate: element.dueTime.epochSecond,
-					instructions: element.instructions,
-				});
-			}
-		}
-		res.status(200).json({ status: "Success", message: assignment });
-	});
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  const url = "https://online.deu.edu.tr/direct/assignment/my.json";
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.assignment_collection;
+    let assignment = [];
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      assignment.push({
+        title: element.title,
+        id: element.id,
+        dueDate: element.dueTime.epochSecond,
+        instructions: element.instructions,
+      });
+    }
+
+    assignment.sort((a, b) => {
+      return b.dueDate - a.dueDate;
+    });
+
+    res.status(200).json({ status: "Success", message: assignment });
+  });
 };
 exports.assignmentDetails = async (req, res) => {
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	const url = "https://online.deu.edu.tr/direct/assignment/my.json";
-	const options = {
-		method: "GET",
-		url: url,
-		headers: {
-			"Content-Type": "application/json",
-			Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
-		json = JSON.parse(body);
-		json = json.assignment_collection;
-		let assignment = [];
-		for (let i = 0; i < json.length; i++) {
-			const element = json[i];
-			if (element.id == req.params.id) {
-				assignment.push({
-					title: element.title,
-					id: element.id,
-					dueDate: element.dueTime.epochSecond,
-					instructions: element.instructions,
-				});
-			}
-		}
-		res.status(200).json({ status: "Success", message: assignment });
-	});
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  const url = "https://online.deu.edu.tr/direct/assignment/my.json";
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.assignment_collection;
+    let assignment = [];
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      if (element.id == req.params.id) {
+        assignment.push({
+          title: element.title,
+          id: element.id,
+          dueDate: element.dueTime.epochSecond,
+          instructions: element.instructions,
+        });
+      }
+    }
+    res.status(200).json({ status: "Success", message: assignment });
+  });
 };
 
 exports.getMeetings = async (req, res) => {
-	const user = await User.findById(req.session.user._id);
-	if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-	const url = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + req.query.siteId;
-	console.log(url);
+  const user = await User.findById(req.session.user._id);
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
 
-	const options = {
-		method: "GET",
-		url: url,
-		headers: {
-			"Content-Type": "application/json",
-			Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-		},
-	};
-	request(options, (error, response, body) => {
-		if (error) return res.status(500).json({ status: "Error", message: error });
-		json = JSON.parse(body);
-		json = json["bbb-tool_collection"];
-		let meeting = [];
-		for (let i = 0; i < json.length; i++) {
-			const element = json[i];
-			console.log(Date.now());
-			console.log(element.endDate);
-			if (Date.now() - element.endDate < 0) {
-				meeting.push({
-					id: element.id,
-					startTime: element.endDate,
-					joinUrl: element.entityURL + "/joinMeeting",
-				});
-				console.log(element);
-			}
-		}
-		res.status(200).json({ status: "Success", message: meeting });
-	});
+  const url = "https://online.deu.edu.tr/portal/favorites/list";
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.favoriteSiteIds;
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      getMeetingInfo(element, req.session.sakai.token, res);
+    }
+  });
+  console.log(favoriteFunction());
+};
+
+const getMeetingInfo = async (urls, token, res) => {
+  const url = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + urls;
+  const options = {
+    method: "GET",
+    url: url,
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `SAKAI2SESSIONID=${token}`,
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
+    json = JSON.parse(body);
+    json = json.page;
+    let meeting = [];
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      console.log(Date.now());
+      console.log(element.endDate);
+      if (Date.now() - element.endDate < 0) {
+        meeting.push({
+          id: element.id,
+          startTime: element.endDate,
+          joinUrl: element.entityURL + "/joinMeeting",
+        });
+        console.log(element);
+      }
+    }
+    res.status(200).json({ status: "Success", message: meeting });
+  });
 };

@@ -1,9 +1,17 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import axios from "axios";
 export default function Navbar() {
-  const navigate = useNavigate();
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.setItem("login", "false");
+    await axios
+      .get("http://localhost:3000/user/logout")
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error.response.data);
+      });
     window.location.reload();
   };
   if (localStorage.getItem("login") === "true") {
