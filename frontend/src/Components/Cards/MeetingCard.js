@@ -20,6 +20,7 @@ export default function MeetingCard(item) {
           className="card-text"
           dangerouslySetInnerHTML={{ __html: item.item.body }}
         />
+        <div className="card-text">{item.item.ownerDisplayName}</div>
         <a href={item.item.joinUrl} className={"btn btn-" + disabled}>
           {joinButton}
         </a>
