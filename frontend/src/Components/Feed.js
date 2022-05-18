@@ -23,7 +23,11 @@ export default function Feed() {
         })
         .then((response) => {
           if (response.data.status === "Success") {
-            console.log(response.data.message);
+            console.log(
+              response.data.status,
+              response.data.status.code,
+              response.data.message
+            );
             setAnnouncement(response.data.message);
           }
         });

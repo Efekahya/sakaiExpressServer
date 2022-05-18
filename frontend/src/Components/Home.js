@@ -21,14 +21,12 @@ export default function Home() {
     );
   }
   if (loggedIn.login === "true") {
-    if (loggedIn.sakai === "" || loggedIn.sakai === undefined) {
-      return (
-        <>
-          <div>
-            <Feed />
-          </div>
-        </>
-      );
-    }
+    return (
+      <>
+        <div>
+          <Feed />
+        </div>
+      </>
+    );
   }
 }

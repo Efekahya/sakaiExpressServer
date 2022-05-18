@@ -4,8 +4,6 @@ export default function MeetingCard(item) {
   if (item.item.startTime === "") {
     d = "No Meeting Scheduled";
   }
-  console.log("ITEM DATE :", item.item.startTime);
-  console.log("DATE NOW : ", Date.now());
 
   return (
     <div className="card mb-2">

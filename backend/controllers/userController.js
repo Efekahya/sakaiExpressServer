@@ -192,7 +192,6 @@ exports.getAssignments = async (req, res) => {
     assignment.sort((a, b) => {
       return b.dueDate - a.dueDate;
     });
-
     res.status(200).json({ status: "Success", message: assignment });
   });
 };
@@ -230,59 +229,5 @@ exports.assignmentDetails = async (req, res) => {
 };
 
 exports.getMeetings = async (req, res) => {
-  const user = await User.findById(req.session.user._id);
-  if (!user)
-    return res.status(404).json({ status: "Error", message: "User not found" });
-
-  const url = "https://online.deu.edu.tr/portal/favorites/list";
-  const options = {
-    method: "GET",
-    url: url,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.favoriteSiteIds;
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      getMeetingInfo(element, req.session.sakai.token, res);
-    }
-  });
-  console.log(favoriteFunction());
-};
-
-const getMeetingInfo = async (urls, token, res) => {
-  const url = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + urls;
-  const options = {
-    method: "GET",
-    url: url,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${token}`,
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.page;
-    let meeting = [];
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      console.log(Date.now());
-      console.log(element.endDate);
-      if (Date.now() - element.endDate < 0) {
-        meeting.push({
-          id: element.id,
-          startTime: element.endDate,
-          joinUrl: element.entityURL + "/joinMeeting",
-        });
-        console.log(element);
-      }
-    }
-    res.status(200).json({ status: "Success", message: meeting });
-  });
+  res.json({ status: "Success", message: {} });
 };
