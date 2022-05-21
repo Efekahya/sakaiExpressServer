@@ -1,19 +1,45 @@
-import React from "react";
-export default function AssignmentCard(item) {
-  let d = new Date(item.item.dueDate * 1000).toLocaleString();
-  return (
-    <div className="card mb-2">
-      <div className="card-body">
-        <h5 className="card-title">{item.item.title}</h5>
-        <h6 className="card-subtitle mb-2 text-muted">{d}</h6>
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+export default function AssignmentCard() {
+  const [assignments, setAssignments] = useState({});
+  useEffect(() => {
+    const getAssignments = async () => {
+      await axios
+        .get("http://localhost:3000/user/assignment", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        })
+        .then((response) => {
+          if (response.data.status === "Success") {
+            setAssignments(response.data.message);
+          }
+        });
+    };
+    getAssignments();
+  }, []);
+  if (assignments.length > 0) {
+    return assignments.map((item) => {
+      let d = new Date(item.dueDate * 1000).toLocaleString();
+      return (
         <div
-          className="card-text"
-          dangerouslySetInnerHTML={{ __html: item.item.instructions }}
-        />
-        <a href="/" className="btn btn-primary">
-          Go somewhere
-        </a>
-      </div>
-    </div>
-  );
+          key={item.id}
+          className="card mb-2 border border-3 border-secondary rounded"
+        >
+          <div className="card-body text-white-50 bg-dark">
+            <h5 className="card-title fw-bold">{item.title}</h5>
+            <h6 className="card-subtitle mb-2 text-warning">{d}</h6>
+
+            <div
+              className="card-text"
+              dangerouslySetInnerHTML={{ __html: item.instructions }}
+            />
+          </div>
+        </div>
+      );
+    });
+  } else {
+    return <div className="spinner-border text-primary"></div>;
+  }
 }
