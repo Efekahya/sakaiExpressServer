@@ -5,11 +5,11 @@ import { NavLink } from "react-router-dom";
 const handleRegister = (e) => {
   e.preventDefault();
   const form = e.target.form;
-  console.log(form);
   const data = {
     email: form.email.value,
     password: form.password.value,
     name: form.name.value,
+    lastName: form.lastName.value,
   };
   axios
     .post("http://localhost:3000/user/register", data, {
@@ -18,7 +18,13 @@ const handleRegister = (e) => {
       },
     })
     .then((response) => {
-      console.log(response.data);
+      // redirect to login page
+      if (window.location.pathname === "/register") {
+        window.location.replace("/login");
+      }
+    })
+    .catch((error) => {
+      console.log(error.response.data);
     });
 };
 
@@ -44,25 +50,22 @@ export default function Register() {
               <form action="" method="POST">
                 <div className="form-group">
                   <label htmlFor="name">Name</label>
+                  <input type="name" className="form-control" placeholder="Name" name="name" id="name" required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="lastName">Last Name</label>
                   <input
                     type="name"
                     className="form-control"
                     placeholder="Name"
-                    name="name"
-                    id="name"
+                    name="lastName"
+                    id="lastName"
                     required
                   />
                 </div>
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Email"
-                    name="email"
-                    id="email"
-                    required
-                  />
+                  <input type="email" className="form-control" placeholder="Email" name="email" id="email" required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="password">Password</label>
@@ -76,11 +79,7 @@ export default function Register() {
                   />
                 </div>
                 <br />
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleRegister}
-                >
+                <button type="button" className="btn btn-primary" onClick={handleRegister}>
                   Register
                 </button>
               </form>

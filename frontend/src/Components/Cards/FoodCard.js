@@ -16,16 +16,16 @@ export default function Food() {
           if (response.data.status === "Success") {
             setFood(response.data.message);
           }
+        })
+        .catch((error) => {
+          console.log(error.response);
         });
     };
     getFood();
   }, []);
   if (food !== undefined) {
     return (
-      <div
-        className="card mb-2 border border-3 border-secondary rounded"
-        style={{ width: "18rem" }}
-      >
+      <div className="card mb-2 border border-3 border-secondary rounded">
         <img src={food[0].img} className="card-img-top" alt="Food IMG"></img>
         <div className="card-body text-white-50 bg-dark">
           <h5 className="card-title fw-bold">{food[0].date}</h5>
@@ -38,9 +38,5 @@ export default function Food() {
       </div>
     );
   }
-  return (
-    <div className="card" style={{ width: "18rem" }}>
-      Loading
-    </div>
-  );
+  return <div className="spinner-border text-primary"></div>;
 }

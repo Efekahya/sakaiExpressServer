@@ -19,11 +19,10 @@ export default function LibraryCard() {
     };
     getLibrary();
   }, []);
-  console.log(library);
   if (library !== undefined) {
     return (
       <>
-        <div className="card mb-2 border border-3 border-secondary rounded w-50 p-0 m-0">
+        <div className="card mb-2 border border-3 border-secondary rounded">
           <div className="card-body text-white-50 bg-dark fs-5">
             <div dangerouslySetInnerHTML={{ __html: library.text }} />
 
@@ -36,9 +35,5 @@ export default function LibraryCard() {
       </>
     );
   }
-  return (
-    <div className="card" style={{ width: "18rem" }}>
-      Loading
-    </div>
-  );
+  return <div className="spinner-border text-primary"></div>;
 }

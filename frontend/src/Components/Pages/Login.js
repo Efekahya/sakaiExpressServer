@@ -1,10 +1,7 @@
-import { React, useContext } from "react";
+import { React } from "react";
 import axios from "axios";
 import { NavLink } from "react-router-dom";
-import LoginContext from "../Context/Login";
 export default function Login() {
-  const { setLoggedIn } = useContext(LoginContext);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     const form = e.target.form;
@@ -21,14 +18,12 @@ export default function Login() {
       })
       .then((response) => {
         if (response.data.status === "Success") {
-          console.log("Succes login");
-          localStorage.setItem("login", "true");
-          localStorage.setItem("email", response.data.message.email);
-          setLoggedIn({
-            login: "true",
-            email: response.data.message.email,
-          });
-
+          const local = JSON.parse(localStorage.getItem("user"));
+          local.loggedIn = true;
+          local.hasSakai = response.data.hasSakai;
+          local.token = response.data.token;
+          localStorage.setItem("user", JSON.stringify(local));
+          axios.defaults.headers.common["Authorization"] = response.data.token;
           // redirect to home page
           if (window.location.pathname === "/login") {
             window.location.replace("/");
@@ -49,7 +44,6 @@ export default function Login() {
       })
       .then((response) => {
         if (response.data.status === "Success") {
-          console.log(response.data.message);
         }
       })
       .catch((error) => {
@@ -77,14 +71,7 @@ export default function Login() {
               <form action="" method="POST">
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Email"
-                    name="email"
-                    id="email"
-                    required
-                  />
+                  <input type="email" className="form-control" placeholder="Email" name="email" id="email" required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="password">Password</label>
@@ -99,11 +86,7 @@ export default function Login() {
                 </div>
                 <br />
 
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleLogin}
-                >
+                <button type="button" className="btn btn-primary" onClick={handleLogin}>
                   Login
                 </button>
               </form>

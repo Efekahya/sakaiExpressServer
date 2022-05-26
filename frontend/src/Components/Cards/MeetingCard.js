@@ -8,6 +8,7 @@ export default function MeetingCard() {
         .get("http://localhost:3000/user/meeting", {
           headers: {
             "Content-Type": "application/json",
+            Authorization: JSON.parse(localStorage.getItem("user")).token,
           },
           withCredentials: true,
         })
@@ -32,18 +33,11 @@ export default function MeetingCard() {
         joinButton = "Meeting has ended";
       }
       return (
-        <div
-          key={item.id}
-          className="card mb-2 border border-3 border-secondary rounded"
-          style={{ width: "18rem" }}
-        >
+        <div key={item.id} className="card mb-2 border border-3 border-secondary rounded" style={{ width: "18rem" }}>
           <div className="card-body text-white-50 bg-dark">
             <h5 className="card-title text-white-50 fw-bold">{item.name}</h5>
             <h6 className="card-subtitle mb-2 text-warning">{d}</h6>
-            <div
-              className="card-text"
-              dangerouslySetInnerHTML={{ __html: item.body }}
-            />
+            <div className="card-text" dangerouslySetInnerHTML={{ __html: item.body }} />
             <div className="card-text">{item.ownerDisplayName}</div>
             <a href={item.joinUrl} className={"btn btn-" + disabled}>
               {joinButton}

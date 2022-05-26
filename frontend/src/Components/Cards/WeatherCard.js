@@ -11,17 +11,14 @@ export default function WeatherCard() {
     };
     getWeather();
   }, []);
-  console.log(weather);
   if (weather !== undefined) {
     var date = new Date(weather.dt * 1000);
     return (
-      <div
-        className="card mb-2 border border-3 border-secondary rounded bg-dark"
-        style={{ width: "15rem" }}
-      >
+      <div className="card mb-2 border border-3 border-secondary rounded bg-dark">
         <img
           src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}.png`}
           className="card-img-top"
+          style={{ width: "65%" }}
           alt="Weather icon"
         ></img>
 
@@ -33,6 +30,6 @@ export default function WeatherCard() {
       </div>
     );
   } else {
-    return <div>Loading</div>;
+    return <div className="spinner-border text-primary"></div>;
   }
 }

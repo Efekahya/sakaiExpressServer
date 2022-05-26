@@ -8,6 +8,7 @@ export default function AssignmentCard() {
         .get("http://localhost:3000/user/assignment", {
           headers: {
             "Content-Type": "application/json",
+            Authorization: JSON.parse(localStorage.getItem("user")).token,
           },
           withCredentials: true,
         })
@@ -23,18 +24,12 @@ export default function AssignmentCard() {
     return assignments.map((item) => {
       let d = new Date(item.dueDate * 1000).toLocaleString();
       return (
-        <div
-          key={item.id}
-          className="card mb-2 border border-3 border-secondary rounded"
-        >
+        <div key={item.id} className="card mb-2 border border-3 border-secondary rounded">
           <div className="card-body text-white-50 bg-dark">
             <h5 className="card-title fw-bold">{item.title}</h5>
             <h6 className="card-subtitle mb-2 text-warning">{d}</h6>
 
-            <div
-              className="card-text"
-              dangerouslySetInnerHTML={{ __html: item.instructions }}
-            />
+            <div className="card-text" dangerouslySetInnerHTML={{ __html: item.instructions }} />
           </div>
         </div>
       );
