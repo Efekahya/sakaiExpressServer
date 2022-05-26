@@ -78,28 +78,11 @@ exports.addSakai = async (req, res) => {
   user.save().then(async (user) => {
     await this.getSessionToken(req, res);
   });
-  const url = "https://online.deu.edu.tr/direct/session.json";
-  const options = {
-    method: "GET",
-    url: url,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.session_collection;
-    if (json[0].userId) {
-      return res.status(200).json({ status: "Success", message: "Succesfully added sakai info" });
-    }
 
-    user.sakaiEmail = undefined;
-    user.sakaiPassword = undefined;
-    user.save().then((user) => {
-      return res.status(404).json({ status: "Error", message: "Your Sakai Credentials is Wrong" });
-    });
+  user.sakaiEmail = undefined;
+  user.sakaiPassword = undefined;
+  user.save().then((user) => {
+    return res.status(404).json({ status: "Error", message: "Your Sakai Credentials is Wrong" });
   });
 };
 
@@ -123,37 +106,37 @@ exports.deleteSakai = async (req, res) => {
   });
 };
 
-exports.getSessionToken = async (req, res) => {
-  const url = "https://online.deu.edu.tr/relogin";
+// exports.getSessionToken = async (req, res) => {
+//   const url = "https://online.deu.edu.tr/relogin";
 
-  if (!req.session.user) {
-    return;
-  }
-  const user = await User.findById(req.session.user._id);
-  const options = {
-    method: "POST",
-    url: url,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    form: {
-      eid: user.sakaiEmail,
-      pw: user.sakaiPassword,
-      submit: "Giriş",
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return;
+//   if (!req.session.user) {
+//     return;
+//   }
+//   const user = await User.findById(req.session.user._id);
+//   const options = {
+//     method: "POST",
+//     url: url,
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded",
+//     },
+//     form: {
+//       eid: user.sakaiEmail,
+//       pw: user.sakaiPassword,
+//       submit: "Giriş",
+//     },
+//   };
+//   request(options, (error, response, body) => {
+//     if (error) return;
 
-    const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
-    req.session.sakai = {
-      token: token,
-    };
-    req.session.save((err) => {
-      if (err) return;
-    });
-  });
-};
+//     const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
+//     req.session.sakai = {
+//       token: token,
+//     };
+//     req.session.save((err) => {
+//       if (err) return;
+//     });
+//   });
+// };
 
 exports.getAnnouncements = async (req, res) => {
   const user = await User.findById(req.session.user._id);
