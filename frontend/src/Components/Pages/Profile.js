@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 
 export default function Profile() {
   const [user, setUser] = useState(undefined);
+  const [alert,setAlert] = useState({alertText:"",alertClass:"primary"})
   useEffect(() => {
     const getUser = async () => {
       await axios
@@ -25,35 +26,32 @@ export default function Profile() {
     getUser();
   }, []);
   const handleSubmit = async (e) => {
-    console.log(JSON.parse(localStorage.getItem("user")).token);
     const form = e.target.form;
-    console.log(e.target);
-    const data = {
-      name: form.name.value,
-      lastName: form.lastName.value,
-      email: form.email.value,
-      sakaiEmail: form.sakaiEmail.value,
-      sakaiPassword: form.sakaiPassword.value,
-    };
-    console.log(data);
-    await axios
-      .put("http://localhost:3000/user/updateUser", data, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: JSON.parse(localStorage.getItem("user")).token,
-        },
-        withCredentials: true,
-      })
-      .then((response) => {
-        console.log("DATAAA", response.data);
-        if (response.data.status === "Success") {
-        } else {
-          e.preventDefault();
-        }
-      })
-      .catch((error) => {
-        console.log(error.response.data);
-      });
+    if (form.checkValidity()) {
+      e.preventDefault();
+      const data = {
+        name: form.name.value,
+        lastName: form.lastName.value,
+        email: form.email.value,
+        sakaiEmail: form.sakaiEmail.value,
+        sakaiPassword: form.sakaiPassword.value,
+      };
+      await axios
+        .put("http://localhost:3000/user/updateUser", data, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: JSON.parse(localStorage.getItem("user")).token,
+          },
+          withCredentials: true,
+        })
+        .then((response) => {
+            window.location.href = "/"
+        })
+        .catch((error) => {
+          setAlert({alertText:"alert",alertClass:"danger"})
+          console.log(error.response.data);
+        });
+    }
   };
 
   if (user !== undefined) {
@@ -173,8 +171,8 @@ export default function Profile() {
                       ></input>
                     </div>
                   </div>
-                  <button className="btn btn-primary" type="submit" onClick={handleSubmit}>
-                    Save changes
+                  <button className={"btn btn-"+alert.alertClass} type="submit" onClick={handleSubmit}>
+                    {(alert.alertText.length > 1) ? "Sakai is not valid": "Save Changes" }
                   </button>
                 </form>
               </div>

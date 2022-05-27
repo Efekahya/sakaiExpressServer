@@ -38,7 +38,7 @@ exports.login = async (req, res) => {
     jwt.sign(
       { _id: user._id, name: user.name, email: user.email, hasSakai: hasSakai },
       process.env.JWT_TOKEN,
-      { expiresIn: "1h" },
+      { expiresIn: "10h" },
       (err, token) => {
         if (err) {
           return res.status(500).json({ status: "Error", message: err });
@@ -64,10 +64,21 @@ exports.login = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).json({ status: "Error", message: err });
-    res.status(200).json({ status: "Success", message: "Logged out" });
-  });
+  axios
+    .get("https://online.deu.edu.tr/portal/logout", {
+      headers: {
+        Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+      },
+    })
+    .then((response) => {
+      req.session.destroy((err) => {
+        if (err) return res.status(500).json({ status: "Error session", message: err });
+      });
+      return res.status(200).json({ status: "Success", message: "Logged out" });
+    })
+    .catch((err) => {
+      return res.status(500).json({ status: "Error", message: err });
+    });
 };
 
 exports.addSakai = async (req, res) => {
@@ -76,13 +87,7 @@ exports.addSakai = async (req, res) => {
   user.sakaiEmail = req.body.sakaiEmail;
   user.sakaiPassword = req.body.sakaiPassword;
   user.save().then(async (user) => {
-    await this.getSessionToken(req, res);
-  });
-
-  user.sakaiEmail = undefined;
-  user.sakaiPassword = undefined;
-  user.save().then((user) => {
-    return res.status(404).json({ status: "Error", message: "Your Sakai Credentials is Wrong" });
+    return res.status(200).json({ status: "Success", message: user.sakaiEmail });
   });
 };
 
@@ -106,37 +111,37 @@ exports.deleteSakai = async (req, res) => {
   });
 };
 
-// exports.getSessionToken = async (req, res) => {
-//   const url = "https://online.deu.edu.tr/relogin";
+exports.getSessionToken = async (req, res) => {
+  const url = "https://online.deu.edu.tr/relogin";
+  if (!req.session.user) {
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  }
+  const user = await User.findById(req.session.user._id);
+  const options = {
+    method: "POST",
+    url: url,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    form: {
+      eid: user.sakaiEmail,
+      pw: user.sakaiPassword,
+      submit: "Giriş",
+    },
+  };
+  request(options, (error, response, body) => {
+    if (error) return res.status(500).json({ status: "Error", message: error });
 
-//   if (!req.session.user) {
-//     return;
-//   }
-//   const user = await User.findById(req.session.user._id);
-//   const options = {
-//     method: "POST",
-//     url: url,
-//     headers: {
-//       "Content-Type": "application/x-www-form-urlencoded",
-//     },
-//     form: {
-//       eid: user.sakaiEmail,
-//       pw: user.sakaiPassword,
-//       submit: "Giriş",
-//     },
-//   };
-//   request(options, (error, response, body) => {
-//     if (error) return;
-
-//     const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
-//     req.session.sakai = {
-//       token: token,
-//     };
-//     req.session.save((err) => {
-//       if (err) return;
-//     });
-//   });
-// };
+    const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
+    req.session.sakai = {
+      token: token,
+    };
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ status: "Error", message: err });
+      return res.status(200).json({ status: "Success", message: token });
+    });
+  });
+};
 
 exports.getAnnouncements = async (req, res) => {
   const user = await User.findById(req.session.user._id);
@@ -329,6 +334,8 @@ exports.getUserData = async (req, res) => {
   }
   let profilePictureUrl = "";
   let image = "";
+  let userID = "";
+  let bullhornAlertCount
   await axios
     .get("https://online.deu.edu.tr/direct/profile-image/details.json", {
       headers: {
@@ -338,7 +345,7 @@ exports.getUserData = async (req, res) => {
     })
     .then((response) => {
       profilePictureUrl = response.data.url;
-      console.log(profilePictureUrl);
+      userID = profilePictureUrl.split("/")[5];
     })
     .catch((error) => {
       console.log(error.message);
@@ -358,6 +365,29 @@ exports.getUserData = async (req, res) => {
     .catch((error) => {
       console.log(error.message);
     });
+  await axios
+    .get(`https://online.deu.edu.tr/direct/profile/${userID}/unreadMessagesCount.json`, {
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+      },
+    })
+    .then((response) => {
+
+      userId = response.data
+    });
+  await axios
+    .get(`https://online.deu.edu.tr/direct/portal/bullhornAlertCount.json`, {
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+      },
+    })
+    .then((response) => {
+
+      bullhornAlertCount = response.data
+    });
+
   let userr = {
     name: user.name,
     lastName: user.lastName,
@@ -365,6 +395,8 @@ exports.getUserData = async (req, res) => {
     sakaiEmail: user.sakaiEmail,
     sakaiPassword: "",
     profilePicture: image,
+    unreadMessagesCount:userId,
+    bullhornAlertCount: bullhornAlertCount
   };
   return res.status(200).json({ status: "Success", message: userr });
 };
@@ -373,38 +405,64 @@ exports.updateUser = async (req, res) => {
   const user = await User.findById(req.session.user._id);
   if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
   const { name, lastName, email, sakaiEmail, sakaiPassword } = req.body;
-  const sakaiEmailTemp = sakaiEmail;
-  const sakaiPassTemp = sakaiPassword;
   user.name = name;
   user.lastName = lastName;
   user.email = email;
   user.sakaiEmail = sakaiEmail;
   user.sakaiPassword = sakaiPassword;
-  user.save().then((user) => {
-    this.getSessionToken(req, res);
+  user.save().then(() => {
+    return res.status(200).json({ status: "Success", message: "Succesfully updated the user" });
   });
-  const url = "https://online.deu.edu.tr/direct/session.json";
-  const options = {
-    method: "GET",
-    url: url,
+};
+
+exports.getNotifications = async (req,res) => {
+
+  const user = await User.findById(req.session.user._id);
+  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (user.sakaiEmail == "") {
+    return res.status(404).json({ status: "Error", message: "User doesn't have sakai info" });
+  }
+  await axios
+  .get("https://online.deu.edu.tr/direct/portal/bullhornAlerts.json", {
     headers: {
       "Content-Type": "application/json",
       Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
     },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.session_collection;
-    console.log(json[0].userId);
-    if (json[0].userId) {
-      return res.status(200).json({ status: "Success", message: "Succesfully updated user info" });
+  })
+  .then((response) => {
+    json = response.data
+    json = json.alerts
+
+    let assignmentArr = []
+    let announcementArr = []
+    for (let i = 0; i < json.length; i++) {
+      const element = json[i];
+      if (element.event.split(".")[0] === "annc"){
+
+        announcementArr.push({
+          tutorName: element.fromDisplayName,
+          siteTitle: element.siteTitle,
+          title : element.title,
+          url: element.url,
+          event : element.event.split(".")[0]
+        })
+      }
+      if (element.event.split(".")[0] === "asn"){
+
+        assignmentArr.push({
+          tutorName: element.fromDisplayName,
+          siteTitle: element.siteTitle,
+          title : element.title,
+          url: element.url,
+          event : element.event.split(".")[0]
+        })
+      }
+
     }
-    user.sakaiEmail = sakaiEmailTemp;
-    console.log(sakaiEmailTemp);
-    user.sakaiPassword = sakaiPassTemp;
-    user.save().then(async (user) => {
-      return res.status(200).json({ status: "Error", message: "Sakai credentials are wrong" });
-    });
+    res.status(200).json({status:"Success", message:{assignments:assignmentArr,announcements:announcementArr}})
+  })
+  .catch((error) => {
+    console.log(error.message);
   });
-};
+
+}

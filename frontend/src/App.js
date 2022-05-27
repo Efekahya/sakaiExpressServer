@@ -5,7 +5,7 @@ import { Routes, Route, BrowserRouter } from "react-router-dom";
 import Register from "./Components/Pages/Register";
 import Profile from "./Components/Pages/Profile";
 import Navbar from "./Components/Pages/Navbar";
-
+import Notification from "./Components/Pages/Notification";
 function App() {
   return (
     <>
@@ -24,6 +24,7 @@ function App() {
           <Route path="/" exact element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profil" element={<Profile />} />
+          <Route path="/notifications" element={<Notification />} />
           <Route path="*" element={<div>404</div>} />
         </Routes>
       </BrowserRouter>

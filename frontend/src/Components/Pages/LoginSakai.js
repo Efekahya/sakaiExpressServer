@@ -9,7 +9,6 @@ export default function LoginSakai() {
       sakaiEmail: form.email.value,
       sakaiPassword: form.password.value,
     };
-    console.log(JSON.parse(localStorage.getItem("user")).token);
     await axios
       .post("http://localhost:3000/user/addSakai", data, {
         headers: {

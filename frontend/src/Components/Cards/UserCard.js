@@ -25,6 +25,14 @@ export default function UserCard() {
     }
   }, []);
 
+  const seeNotifications = () => {
+    window.location.href = "/notifications"
+  }
+
+const deleteNotifications = () => {
+  
+}
+
   if (user.loggedIn === false) {
     return (
       <div className="card mb-2 border border-3 border-secondary rounded">
@@ -55,14 +63,32 @@ export default function UserCard() {
   }
   return (
     <>
-      <div className="card mb-2 border border-3 border-secondary rounded">
-        <div className="card-body text-white-50 bg-dark">
-          <h5 className="card-title fw-bold">{userData.name}</h5>
+      <div className="card mb-4 mb-xl-0 border border-3 border-secondary rounded bg-dark text-white-50">
+        <div className="card-body text-center">
+          <img src={userData.profilePicture} alt="profile" className="rounded-5" />
+          <br />
+          <br />
+          <div className="card-body text-white-50 bg-dark">
+            <h5 className="card-title fw-bold">
+              {userData.name} {userData.lastName}
+            </h5>
 
-          <div className="card-text">
-            {userData.email}
-            <br />
-          </div>
+            <div className="card-text">
+              {userData.sakaiEmail}
+              </div>
+              <br />
+            <div className="card-text text-start">
+              Okunmamış Mesajlar :<span className="text-warning"> {userData.unreadMessagesCount}</span>
+              </div>
+            <div className="card-text text-start">
+              Okunmamış Bildirimler :<span className="text-warning"> {userData.bullhornAlertCount}</span>
+              </div>
+              <br />
+              <br />
+              <button className="btn btn-primary text-start" onClick={seeNotifications}>Okunmamış Bildirimleri Gör</button>
+              <br /><br />
+              <button className="btn btn-warning text-start" onClick={deleteNotifications}>Okunmamış Bildirimleri Sil</button>
+            </div>
         </div>
       </div>
     </>
