@@ -5,7 +5,7 @@ export default function AnnouncementCard() {
   useEffect(() => {
     const getAnnouncements = async () => {
       await axios
-        .get("http://localhost:3000/user/announcement", {
+        .get("https://convenient-sakai.herokuapp.com/user/announcement", {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,

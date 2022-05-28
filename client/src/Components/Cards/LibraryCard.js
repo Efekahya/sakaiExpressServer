@@ -5,7 +5,7 @@ export default function LibraryCard() {
   useEffect(() => {
     const getLibrary = async () => {
       await axios
-        .get("http://localhost:3000/utils/library", {
+        .get("https://convenient-sakai.herokuapp.com/utils/library", {
           headers: {
             "Content-Type": "application/json",
           },

@@ -4,7 +4,7 @@ import axios from "axios";
 export default function Navbar() {
   const handleLogout = async () => {
     await axios
-      .get("http://localhost:3000/user/logout")
+      .get("https://convenient-sakai.herokuapp.com/user/logout")
       .then((response) => {
         localStorage.removeItem("user");
         // redirect to home page

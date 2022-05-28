@@ -67,6 +67,7 @@ app.use(errorHandler);
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Served on port 3000");
+let PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Served on port " + PORT);
 });

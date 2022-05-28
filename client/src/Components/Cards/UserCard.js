@@ -7,7 +7,7 @@ export default function UserCard() {
   useEffect(() => {
     const getAll = async () => {
       await axios
-        .get("http://localhost:3000/user/getUser", {
+        .get("https://convenient-sakai.herokuapp.com/user/getUser", {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,

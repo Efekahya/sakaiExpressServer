@@ -10,7 +10,7 @@ export default function Login() {
       password: form.password.value,
     };
     await axios
-      .post("http://localhost:3000/user/login", data, {
+      .post("https://convenient-sakai.herokuapp.com/user/login", data, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -36,7 +36,7 @@ export default function Login() {
         console.log(error.response.data);
       });
     await axios
-      .get("http://localhost:3000/user/getSakai", {
+      .get("https://convenient-sakai.herokuapp.com/user/getSakai", {
         headers: {
           "Content-Type": "application/json",
         },

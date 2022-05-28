@@ -5,7 +5,7 @@ export default function MeetingCard() {
   useEffect(() => {
     const getMeetings = async () => {
       await axios
-        .get("http://localhost:3000/user/meeting", {
+        .get("https://convenient-sakai.herokuapp.com/user/meeting", {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,

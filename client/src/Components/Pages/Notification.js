@@ -6,18 +6,18 @@ const [notifications,setNotifications] = useState()
     useEffect(() => {
   const getNotifications = async() =>{
     await axios
-        .get("http://localhost:3000/user/getNotifications", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: JSON.parse(localStorage.getItem("user")).token,
-          },
-          withCredentials: true,
-        })
-        .then((response) => {
-          if (response.data.status === "Success") {
-            setNotifications(response.data.message);
-          }
-        });
+      .get("https://convenient-sakai.herokuapp.com/user/getNotifications", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: JSON.parse(localStorage.getItem("user")).token,
+        },
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.data.status === "Success") {
+          setNotifications(response.data.message);
+        }
+      });
     };
 
 

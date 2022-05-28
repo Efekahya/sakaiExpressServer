@@ -7,7 +7,7 @@ export default function Profile() {
   useEffect(() => {
     const getUser = async () => {
       await axios
-        .get("http://localhost:3000/user/getUser", {
+        .get("https://convenient-sakai.herokuapp.com/user/getUser", {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,
@@ -37,7 +37,7 @@ export default function Profile() {
         sakaiPassword: form.sakaiPassword.value,
       };
       await axios
-        .put("http://localhost:3000/user/updateUser", data, {
+        .put("https://convenient-sakai.herokuapp.com/user/updateUser", data, {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,
@@ -45,10 +45,10 @@ export default function Profile() {
           withCredentials: true,
         })
         .then((response) => {
-            window.location.href = "/"
+          window.location.href = "/";
         })
         .catch((error) => {
-          setAlert({alertText:"alert",alertClass:"danger"})
+          setAlert({ alertText: "alert", alertClass: "danger" });
           console.log(error.response.data);
         });
     }

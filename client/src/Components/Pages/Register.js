@@ -12,7 +12,7 @@ const handleRegister = (e) => {
     lastName: form.lastName.value,
   };
   axios
-    .post("http://localhost:3000/user/register", data, {
+    .post("https://convenient-sakai.herokuapp.com/user/register", data, {
       headers: {
         "Content-Type": "application/json",
       },

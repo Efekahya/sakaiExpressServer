@@ -10,7 +10,7 @@ export default function LoginSakai() {
       sakaiPassword: form.password.value,
     };
     await axios
-      .post("http://localhost:3000/user/addSakai", data, {
+      .post("https://convenient-sakai.herokuapp.com/user/addSakai", data, {
         headers: {
           "Content-Type": "application/json",
           Authorization: JSON.parse(localStorage.getItem("user")).token,

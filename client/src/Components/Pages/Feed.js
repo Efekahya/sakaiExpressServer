@@ -13,13 +13,16 @@ export default function Feed() {
       if (user.loggedIn === false || user.hasSakai === undefined || user.hasSakai === false) {
         return;
       }
-      await axios.get("http://localhost:3000/user/getSakaiToken", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: JSON.parse(localStorage.getItem("user")).token,
-        },
-        withCredentials: true,
-      });
+      await axios.get(
+        "https://convenient-sakai.herokuapp.com/user/getSakaiToken",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: JSON.parse(localStorage.getItem("user")).token,
+          },
+          withCredentials: true,
+        }
+      );
     };
     getAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps

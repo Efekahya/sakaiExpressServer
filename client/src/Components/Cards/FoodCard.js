@@ -6,7 +6,7 @@ export default function Food() {
   useEffect(() => {
     const getFood = async () => {
       await axios
-        .get("http://localhost:3000/utils/foodList", {
+        .get("https://convenient-sakai.herokuapp.com/utils/foodList", {
           headers: {
             "Content-Type": "application/json",
           },

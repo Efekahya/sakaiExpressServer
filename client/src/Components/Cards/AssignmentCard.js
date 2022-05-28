@@ -5,7 +5,7 @@ export default function AssignmentCard() {
   useEffect(() => {
     const getAssignments = async () => {
       await axios
-        .get("http://localhost:3000/user/assignment", {
+        .get("https://convenient-sakai.herokuapp.com/user/assignment", {
           headers: {
             "Content-Type": "application/json",
             Authorization: JSON.parse(localStorage.getItem("user")).token,

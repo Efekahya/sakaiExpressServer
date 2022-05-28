@@ -5,7 +5,7 @@ export default function WeatherCard() {
   useEffect(() => {
     const getWeather = async () => {
       const response = await axios.get(
-        `http://localhost:3000/utils/getWeather`
+        `https://convenient-sakai.herokuapp.com/utils/getWeather`
       );
       setWeather(response.data.message);
     };
