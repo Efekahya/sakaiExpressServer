@@ -59,12 +59,12 @@ app.use(
   })
 );
 //?______________________________________________________________________________________________________
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-});
 app.use("/user", require("./routes/userRoute"));
 app.use("/utils", require("./routes/utilsRoute"));
 
+app.get("/*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+});
 app.use(notFound);
 app.use(errorHandler);
 let PORT = process.env.PORT || 3000;
