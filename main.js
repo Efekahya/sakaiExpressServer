@@ -8,6 +8,7 @@ const MongoStore = require("connect-mongo")(session);
 const morgan = require("morgan");
 require("dotenv").config();
 const cors = require("cors");
+const path = require("path");
 //!                                             DB CONNECTION
 
 //!_____________________________________________________________________________________________________
@@ -60,12 +61,11 @@ app.use(
 //?______________________________________________________________________________________________________
 app.use("/user", require("./routes/userRoute"));
 app.use("/utils", require("./routes/utilsRoute"));
-  
+
 app.use(express.static(path.join(__dirname, "client", "build")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
-app.use(notFound);
 app.use(errorHandler);
 let PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
