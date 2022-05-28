@@ -63,7 +63,9 @@ app.use("/utils", require("./routes/utilsRoute"));
 
 app.use(notFound);
 app.use(errorHandler);
-
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+});
 app.listen(3000, () => {
   console.log("Served on port 3000");
 });
