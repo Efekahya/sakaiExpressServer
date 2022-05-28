@@ -30,7 +30,7 @@ app.use(morgan("tiny"));
 
 app.use(
   cors({
-    origin: "https://convenient-sakai.herokuapp.com/",
+    origin: "*",
     credentials: true,
   })
 );
