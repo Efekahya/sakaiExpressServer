@@ -37,6 +37,7 @@ app.use(
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(express.static("client/build"));
 app.use(
   session({
     secret: "secret", //? uuid kullanınca çalışmıyor
@@ -64,8 +65,8 @@ app.use("/utils", require("./routes/utilsRoute"));
 app.use(notFound);
 app.use(errorHandler);
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+  res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
 });
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log("Served on port 3000");
 });
