@@ -1,6 +1,7 @@
 const request = require("request");
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
+const axios = require("axios");
 exports.getFoodList = async (req, res) => {
   request("https://sks.deu.edu.tr/yemek-menusu/", (error, response, body) => {
     if (error) return res.status(500).json({ status: "Error", message: error });
@@ -67,4 +68,11 @@ exports.getLibrary = async (req, res) => {
       });
     }
   );
+};
+
+exports.getWeather = async (req, res) => {
+  const response = await axios.get(
+    `https://api.openweathermap.org/data/2.5/weather?q=Izmir&appid=${process.env.OPENWEATHER_API_KEY}&units=metric`
+  );
+  res.status(200).json({ status: "Success", message: response.data });
 };

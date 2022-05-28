@@ -5,9 +5,9 @@ export default function WeatherCard() {
   useEffect(() => {
     const getWeather = async () => {
       const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?q=Izmir&appid=${process.env.REACT_APP_OPENWEATHER_API_KEY}&units=metric`
+        `http://localhost:3000/utils/getWeather`
       );
-      setWeather(response.data);
+      setWeather(response.data.message);
     };
     getWeather();
   }, []);
