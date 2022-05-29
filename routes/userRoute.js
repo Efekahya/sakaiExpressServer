@@ -7,22 +7,44 @@ const validateJWT = require("../middlewares/jwtAuth");
 const checkSakai = require("../middlewares/checkSakai");
 router.route("/login").post(catchAsync(controller.login));
 
-router.route("/addSakai").post(validateJWT, getSessionToken,checkSakai,catchAsync(controller.addSakai));
-router.route("/updateSakai").put(validateJWT, catchAsync(controller.updateSakai));
-router.route("/deleteSakai").delete(validateJWT, catchAsync(controller.deleteSakai));
+router
+  .route("/addSakai")
+  .post(
+    validateJWT,
+    catchAsync(getSessionToken),
+    catchAsync(checkSakai),
+    catchAsync(controller.addSakai)
+  );
+router
+  .route("/updateSakai")
+  .put(validateJWT, catchAsync(controller.updateSakai));
+router
+  .route("/deleteSakai")
+  .delete(validateJWT, catchAsync(controller.deleteSakai));
 
-router.route("/getSakaiToken").get(validateJWT, catchAsync(controller.getSessionToken));
+router
+  .route("/getSakaiToken")
+  .get(validateJWT, catchAsync(controller.getSessionToken));
 
-router.route("/updateUser").put(validateJWT,getSessionToken,checkSakai, catchAsync(controller.updateUser));
+router
+  .route("/updateUser")
+  .put(
+    validateJWT,
+    catchAsync(getSessionToken),
+    catchAsync(checkSakai),
+    catchAsync(controller.updateUser)
+  );
 router.route("/register").post(catchAsync(controller.register));
 router.route("/logout").get(catchAsync(controller.logout));
 router.route("/getUser").get(validateJWT, catchAsync(controller.getUserData));
 
-router.route("/announcement").get(validateJWT, catchAsync(controller.getAnnouncements));
-router.route("/announcement/:id").get(validateJWT, catchAsync(controller.announcementDetails));
+router
+  .route("/announcement")
+  .get(validateJWT, catchAsync(controller.getAnnouncements));
 
-router.route("/assignment").get(validateJWT, catchAsync(controller.getAssignments));
-router.route("/assignment/:id").get(validateJWT, catchAsync(controller.assignmentDetails));
+router
+  .route("/assignment")
+  .get(validateJWT, catchAsync(controller.getAssignments));
 
 router.route("/meeting").get(validateJWT, catchAsync(controller.getMeetings));
 

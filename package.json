@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "nodemon main.js",
     "heroku-postbuild": "cd client && npm install --legacy-peer-deps && npm install && npm run build"
   },
   "keywords": [],

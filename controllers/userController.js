@@ -33,7 +33,9 @@ exports.login = async (req, res) => {
       return res.status(500).json({ status: "Error", message: err });
     }
     if (!result) {
-      return res.status(404).json({ status: "Error", message: "Password is incorrect" });
+      return res
+        .status(404)
+        .json({ status: "Error", message: "Password is incorrect" });
     }
     jwt.sign(
       { _id: user._id, name: user.name, email: user.email, hasSakai: hasSakai },
@@ -72,7 +74,10 @@ exports.logout = (req, res) => {
     })
     .then((response) => {
       req.session.destroy((err) => {
-        if (err) return res.status(500).json({ status: "Error session", message: err });
+        if (err)
+          return res
+            .status(500)
+            .json({ status: "Error session", message: err });
       });
       return res.status(200).json({ status: "Success", message: "Logged out" });
     })
@@ -83,31 +88,40 @@ exports.logout = (req, res) => {
 
 exports.addSakai = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   user.sakaiEmail = req.body.sakaiEmail;
   user.sakaiPassword = req.body.sakaiPassword;
   user.save().then(async (user) => {
-    return res.status(200).json({ status: "Success", message: user.sakaiEmail });
+    return res
+      .status(200)
+      .json({ status: "Success", message: user.sakaiEmail });
   });
 };
 
 exports.updateSakai = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   user.sakaiEmail = req.body.sakaiEmail;
   user.sakaiPassword = req.body.sakaiPassword;
   user.save().then((user) => {
-    return res.status(200).json({ status: "Success", message: user.sakaiEmail });
+    return res
+      .status(200)
+      .json({ status: "Success", message: user.sakaiEmail });
   });
 };
 
 exports.deleteSakai = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   user.sakaiEmail = undefined;
   user.sakaiPassword = undefined;
   user.save().then((user) => {
-    return res.status(200).json({ status: "Success", message: user.sakaiEmail });
+    return res
+      .status(200)
+      .json({ status: "Success", message: user.sakaiEmail });
   });
 };
 
@@ -117,82 +131,66 @@ exports.getSessionToken = async (req, res) => {
     return res.status(404).json({ status: "Error", message: "User not found" });
   }
   const user = await User.findById(req.session.user._id);
-  const options = {
-    method: "POST",
-    url: url,
+  const data = qs.stringify({
+    eid: user.sakaiEmail,
+    pw: user.sakaiPassword,
+    submit: "Giriş",
+  });
+  var config = {
+    method: "post",
+    url: "https://online.deu.edu.tr/relogin",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    form: {
-      eid: user.sakaiEmail,
-      pw: user.sakaiPassword,
-      submit: "Giriş",
-    },
+    data: data,
   };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-
-    const token = response.headers["set-cookie"][0].split("=")[1].split(";")[0];
-    req.session.sakai = {
-      token: token,
-    };
-    req.session.save((err) => {
-      if (err) return res.status(500).json({ status: "Error", message: err });
-      return res.status(200).json({ status: "Success", message: token });
+  axios(config)
+    .then((response) => {
+      if (
+        response.data.toString().search("hatalı") === -1 &&
+        response.data.toString().search("tam ve doğru") === -1
+      ) {
+        req.session.sakai = {
+          token: response.data.token,
+        };
+        req.session.save();
+        next();
+      } else {
+        return res.status(401).json({
+          status: "Error",
+          message: "Sakai credentials are wrong",
+        });
+      }
+    })
+    .catch(function (error) {
+      console.log(error.message);
+      return res.status(500).json({
+        status: "Error",
+        message: "There is an error with server",
+      });
     });
-  });
 };
 
 exports.getAnnouncements = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-  const url = "https://online.deu.edu.tr/direct/announcement/user.json";
-  const options = {
-    method: "GET",
-    url: url,
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  var config = {
+    method: "get",
+    url: "https://online.deu.edu.tr/direct/announcement/user.json",
     headers: {
       "Content-Type": "application/json",
       Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
     },
   };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.announcement_collection;
-    let announcement = [];
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      announcement.push({
-        title: element.title,
-        id: element.id,
-        createdOn: element.createdOn,
-        body: element.body,
-      });
-    }
-    res.status(200).json({ status: "Success", message: announcement });
-  });
-};
 
-exports.announcementDetails = async (req, res) => {
-  const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-  const url = "https://online.deu.edu.tr/direct/announcement/user.json";
-  const options = {
-    method: "GET",
-    url: url,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.announcement_collection;
-    let announcement = [];
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      if (element.id.split(":")[0] == req.params.id) {
+  axios(config)
+    .then(function (response) {
+      json = JSON.parse(response.data);
+      json = json.announcement_collection;
+      let announcement = [];
+      for (let i = 0; i < json.length; i++) {
+        const element = json[i];
         announcement.push({
           title: element.title,
           id: element.id,
@@ -200,65 +198,33 @@ exports.announcementDetails = async (req, res) => {
           body: element.body,
         });
       }
-    }
-    res.status(200).json({ status: "Success", message: announcement });
-  });
+      res.status(200).json({ status: "Success", message: announcement });
+    })
+    .catch(function (error) {
+      return res.status(500).json({ status: "Error", message: error });
+    });
 };
 
 exports.getAssignments = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-  const url = "https://online.deu.edu.tr/direct/assignment/my.json";
-  const options = {
-    method: "GET",
-    url: url,
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
+  var config = {
+    method: "get",
+    url: "https://online.deu.edu.tr/direct/assignment/my.json",
     headers: {
       "Content-Type": "application/json",
       Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
     },
   };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.assignment_collection;
-    let assignment = [];
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      assignment.push({
-        title: element.title,
-        id: element.id,
-        dueDate: element.dueTime.epochSecond,
-        instructions: element.instructions,
-      });
-    }
 
-    assignment.sort((a, b) => {
-      return b.dueDate - a.dueDate;
-    });
-    res.status(200).json({ status: "Success", message: assignment });
-  });
-};
-
-exports.assignmentDetails = async (req, res) => {
-  const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
-  const url = "https://online.deu.edu.tr/direct/assignment/my.json";
-  const options = {
-    method: "GET",
-    url: url,
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-    },
-  };
-  request(options, (error, response, body) => {
-    if (error) return res.status(500).json({ status: "Error", message: error });
-    json = JSON.parse(body);
-    json = json.assignment_collection;
-    let assignment = [];
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      if (element.id == req.params.id) {
+  axios(config)
+    .then(() => {
+      json = JSON.parse(body);
+      json = json.assignment_collection;
+      let assignment = [];
+      for (let i = 0; i < json.length; i++) {
+        const element = json[i];
         assignment.push({
           title: element.title,
           id: element.id,
@@ -266,14 +232,21 @@ exports.assignmentDetails = async (req, res) => {
           instructions: element.instructions,
         });
       }
-    }
-    res.status(200).json({ status: "Success", message: assignment });
-  });
+
+      assignment.sort((a, b) => {
+        return b.dueDate - a.dueDate;
+      });
+      res.status(200).json({ status: "Success", message: assignment });
+    })
+    .catch(function (error) {
+      return res.status(500).json({ status: "Error", message: error });
+    });
 };
 
 exports.getMeetings = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   const url = "https://online.deu.edu.tr/portal/favorites/list";
   await axios
     .get(url, {
@@ -291,7 +264,8 @@ exports.getMeetings = async (req, res) => {
       let meetingList = [];
       for (let i = 0; i < meeting.length; i++) {
         const element = meeting[i];
-        const url = "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + element;
+        const url =
+          "https://online.deu.edu.tr/direct/bbb-tool.json?siteId=" + element;
         await axios
           .get(url, {
             headers: {
@@ -328,14 +302,17 @@ exports.getMeetings = async (req, res) => {
 
 exports.getUserData = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   if (user.sakaiEmail == "") {
-    return res.status(404).json({ status: "Error", message: "User doesn't have sakai info" });
+    return res
+      .status(404)
+      .json({ status: "Error", message: "User doesn't have sakai info" });
   }
   let profilePictureUrl = "";
   let image = "";
   let userID = "";
-  let bullhornAlertCount
+  let bullhornAlertCount;
   await axios
     .get("https://online.deu.edu.tr/direct/profile-image/details.json", {
       headers: {
@@ -366,15 +343,17 @@ exports.getUserData = async (req, res) => {
       console.log(error.message);
     });
   await axios
-    .get(`https://online.deu.edu.tr/direct/profile/${userID}/unreadMessagesCount.json`, {
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-      },
-    })
+    .get(
+      `https://online.deu.edu.tr/direct/profile/${userID}/unreadMessagesCount.json`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+        },
+      }
+    )
     .then((response) => {
-
-      userId = response.data
+      userId = response.data;
     });
   await axios
     .get(`https://online.deu.edu.tr/direct/portal/bullhornAlertCount.json`, {
@@ -384,8 +363,7 @@ exports.getUserData = async (req, res) => {
       },
     })
     .then((response) => {
-
-      bullhornAlertCount = response.data
+      bullhornAlertCount = response.data;
     });
 
   let userr = {
@@ -395,15 +373,16 @@ exports.getUserData = async (req, res) => {
     sakaiEmail: user.sakaiEmail,
     sakaiPassword: "",
     profilePicture: image,
-    unreadMessagesCount:userId,
-    bullhornAlertCount: bullhornAlertCount
+    unreadMessagesCount: userId,
+    bullhornAlertCount: bullhornAlertCount,
   };
   return res.status(200).json({ status: "Success", message: userr });
 };
 
 exports.updateUser = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   const { name, lastName, email, sakaiEmail, sakaiPassword } = req.body;
   user.name = name;
   user.lastName = lastName;
@@ -411,58 +390,64 @@ exports.updateUser = async (req, res) => {
   user.sakaiEmail = sakaiEmail;
   user.sakaiPassword = sakaiPassword;
   user.save().then(() => {
-    return res.status(200).json({ status: "Success", message: "Succesfully updated the user" });
+    return res
+      .status(200)
+      .json({ status: "Success", message: "Succesfully updated the user" });
   });
 };
 
-exports.getNotifications = async (req,res) => {
-
+exports.getNotifications = async (req, res) => {
   const user = await User.findById(req.session.user._id);
-  if (!user) return res.status(404).json({ status: "Error", message: "User not found" });
+  if (!user)
+    return res.status(404).json({ status: "Error", message: "User not found" });
   if (user.sakaiEmail == "") {
-    return res.status(404).json({ status: "Error", message: "User doesn't have sakai info" });
+    return res
+      .status(404)
+      .json({ status: "Error", message: "User doesn't have sakai info" });
   }
   await axios
-  .get("https://online.deu.edu.tr/direct/portal/bullhornAlerts.json", {
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
-    },
-  })
-  .then((response) => {
-    json = response.data
-    json = json.alerts
+    .get("https://online.deu.edu.tr/direct/portal/bullhornAlerts.json", {
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `SAKAI2SESSIONID=${req.session.sakai.token}`,
+      },
+    })
+    .then((response) => {
+      json = response.data;
+      json = json.alerts;
 
-    let assignmentArr = []
-    let announcementArr = []
-    for (let i = 0; i < json.length; i++) {
-      const element = json[i];
-      if (element.event.split(".")[0] === "annc"){
-
-        announcementArr.push({
-          tutorName: element.fromDisplayName,
-          siteTitle: element.siteTitle,
-          title : element.title,
-          url: element.url,
-          event : element.event.split(".")[0]
-        })
+      let assignmentArr = [];
+      let announcementArr = [];
+      for (let i = 0; i < json.length; i++) {
+        const element = json[i];
+        if (element.event.split(".")[0] === "annc") {
+          announcementArr.push({
+            tutorName: element.fromDisplayName,
+            siteTitle: element.siteTitle,
+            title: element.title,
+            url: element.url,
+            event: element.event.split(".")[0],
+          });
+        }
+        if (element.event.split(".")[0] === "asn") {
+          assignmentArr.push({
+            tutorName: element.fromDisplayName,
+            siteTitle: element.siteTitle,
+            title: element.title,
+            url: element.url,
+            event: element.event.split(".")[0],
+          });
+        }
       }
-      if (element.event.split(".")[0] === "asn"){
-
-        assignmentArr.push({
-          tutorName: element.fromDisplayName,
-          siteTitle: element.siteTitle,
-          title : element.title,
-          url: element.url,
-          event : element.event.split(".")[0]
-        })
-      }
-
-    }
-    res.status(200).json({status:"Success", message:{assignments:assignmentArr,announcements:announcementArr}})
-  })
-  .catch((error) => {
-    console.log(error.message);
-  });
-
-}
+      res.status(200).json({
+        status: "Success",
+        message: {
+          assignments: assignmentArr,
+          announcements: announcementArr,
+        },
+      });
+    })
+    .catch((error) => {
+      console.log(error.message);
+    });
+};
