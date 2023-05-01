@@ -1,5 +1,5 @@
 # This repo is no longer maintained!!
-Feel free to open issues and create pull requests. I will do my best to keep track of them. But, since 
+Feel free to open issues and create pull requests. I will do my best to keep track of them.
 
 # convenientSakai
 
