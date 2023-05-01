@@ -34,13 +34,13 @@ A full-stack project that I'm currently working on. This project currently only 
 
 - Open two terminals, one of them needs to be on the "backend" folder and the other one needs to be on the "frontend" folder. You can use the vscode's integrated terminal to cd to them<br/>
 - If you use npm you can run the "npm i %% sudo npm i nodemon -g" command on both of the terminals<br/>
-- If you use yarn you can run the "yarn i %% sudo yarn i nodemon -g" command on both of the terminals<br/>
+- If you use yarn you can run the "yarn %% sudo yarn nodemon -g" command on both of the terminals<br/>
 
 ## Step 3 : Running the Program!!
 
 - Open two terminals, one of them needs to be on the "backend" folder and the other one needs to be on the "frontend" folder. You can use the vscode's integrated terminal to cd to them
 - If you use npm you can run the "npm i %% sudo npm i nodemon -g" command on both of the terminals
-- If you use yarn you can run the "yarn i %% sudo yarn i nodemon -g" command on both of the terminals
+- If you use yarn you can run the "yarn %% sudo yarn nodemon -g" command on both of the terminals
 
 # HOW TO USE
 
