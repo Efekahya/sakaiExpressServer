@@ -1,29 +1,30 @@
+# This repo is no longer maintained!!
+Feel free to open issues and create pull requests. I will do my best to keep track of them. But, since 
+
 # convenientSakai
 
 A full-stack project that I'm currently working on. This project currently only runs for the Dokuz Eylül University's online education system. You can "change" the domain and start using it for your desired education system that is based on Sakai
 
 # FEATURES
 
---> Register and log in to the system </br>
 --> Add your Sakai information to the system to view your announcements, assignments, and meetings </br>
---> Click on the join meeting button to quickly join to the current meeting that is still available </br>
---> See the meal of the day on the homepage (It's not integrated into the Sakai so it will still show the meal at Dokuz Eylül)</br>
+--> See available meetings and join them with one click </br>
+--> See the meal of the day on the homepage (It's not a built-in SAKAI feature. I'm scraping the Dokuz Eylül university's website for it)</br>
 
 # TODO
 
 --> Add a reminder on meetings, homework</br>
---> Get a notification on a new announcement </br>
+--> Get a notification on new announcements </br>
 --> Filter and search through announcements and assignments</br>
 --> Create an admin panel to easily change some parameters so that the software can be implemented to all Sakai systems</br>
---> Dark mode for my eyes
 
 # HOW TO INSTALL
 
---> This script goes through your favorite sites that you can alter from your university's Sakai website by simply clicking the star icon next to the name of the class. 
+--> This script scrapes all the available data of your favorite sites on SAKAI. 
 
 ## Step 1 : System Dependencies!
 
-- Node.js have to be installed on your system if you didn't install node.js you can refer to this website <a href="https://nodejs.org/en/node.js">Install  Node.js</a>
+- Node.js have to be installed on your system if you don't have node.js you can refer to this website <a href="https://nodejs.org/en/node.js">Install  Node.js</a>
 
 ## Step 2 : Setting up!
 
@@ -32,15 +33,15 @@ A full-stack project that I'm currently working on. This project currently only 
 
 ## Step 2 : Installing Dependencies!
 
-- Open two terminals, one of them needs to be on the "backend" folder and the other one needs to be on the "frontend" folder. You can use the vscode's integrated terminal to cd to them<br/>
+- Open two terminals, one of them needs to be navigated to the "backend" folder and the other one needs to be navigated to the "frontend" folder.<br/>
 - If you use npm you can run the "npm i %% sudo npm i nodemon -g" command on both of the terminals<br/>
 - If you use yarn you can run the "yarn %% sudo yarn nodemon -g" command on both of the terminals<br/>
 
 ## Step 3 : Running the Program!!
+- For backend and frontend terminals run this command 
 
-- Open two terminals, one of them needs to be on the "backend" folder and the other one needs to be on the "frontend" folder. You can use the vscode's integrated terminal to cd to them
-- If you use npm you can run the "npm i %% sudo npm i nodemon -g" command on both of the terminals
-- If you use yarn you can run the "yarn %% sudo yarn nodemon -g" command on both of the terminals
+- For "npm": npm run start
+- For "yarn": yarn start
 
 # HOW TO USE
 
@@ -48,7 +49,7 @@ You can always use the GUI to interact with the system but if you want to develo
 - Proper system workflow requires you to register to the system, log in and add your Sakai credentials
 - After all the info is registered to the database by using endpoints you have to send a request to the /user/getSakai to get the Sakai session token. Thus allowing the backend to store the token to the session.sakai by itself you do not have to do anything further
 - The session token that the backend gets from the Sakai system may be expired within 15 minutes so it is a good idea to resend a request to /getSakai within that period
-<h2>"Do not forget" that this software is still under development there are some SERIOUS SECURITY ISSUES!!!! for development reasons backend still responds with all the credentials about the user!!!!</h2>
+<h2>"Do not forget" that this software is still under development, for development reasons backend still responds with all the credentials about the user!!!!</h2>
 
 <h2 AVAILABLE PROPERTIES</h2>
 
